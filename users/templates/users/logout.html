@@ -1,0 +1,18 @@
+{% extends 'users/base_auth.html' %}
+
+{% block title %}Đăng xuất - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-header">
+        <img src="https://cdn-icons-png.flaticon.com/512/2583/2583344.png" alt="ShoeStore Logo">
+        <h2>Bạn đã đăng xuất</h2>
+        <p class="text-muted">Cảm ơn bạn đã ghé thăm ShoeStore</p>
+    </div>
+    
+    <div class="text-center">
+        <a href="{% url 'login' %}" class="btn btn-primary">Đăng nhập lại</a>
+        <a href="/" class="btn btn-outline-secondary">Trang chủ</a>
+    </div>
+</div>
+{% endblock %}

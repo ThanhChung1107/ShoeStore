@@ -1,0 +1,57 @@
+{% extends 'users/base_auth.html' %}
+
+{% block title %}Đăng ký - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-header">
+        <img src="https://cdn-icons-png.flaticon.com/512/2583/2583344.png" alt="ShoeStore Logo">
+        <h2>Tạo tài khoản mới</h2>
+        <p class="text-muted">Tham gia cùng ShoeStore ngay hôm nay</p>
+    </div>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Tên đăng nhập</label>
+            <input type="text" name="username" class="form-control" id="id_username" required>
+            <div class="form-text">Tối đa 150 ký tự. Chỉ bao gồm chữ cái, số và @/./+/-/_</div>
+        </div>
+        <div class="mb-3">
+            <label for="id_email" class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" id="id_email" required>
+        </div>
+        <div class="mb-3">
+            <label for="id_password1" class="form-label">Mật khẩu</label>
+            <input type="password" name="password1" class="form-control" id="id_password1" required>
+            <div class="form-text">
+                <ul>
+                    <li>Mật khẩu không được quá giống với thông tin cá nhân</li>
+                    <li>Mật khẩu phải chứa ít nhất 8 ký tự</li>
+                    <li>Mật khẩu không được phổ biến</li>
+                    <li>Mật khẩu không được hoàn toàn bằng số</li>
+                </ul>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="id_password2" class="form-label">Xác nhận mật khẩu</label>
+            <input type="password" name="password2" class="form-control" id="id_password2" required>
+        </div>
+        <div class="mb-3">
+            <label for="id_phone_number" class="form-label">Số điện thoại (tùy chọn)</label>
+            <input type="text" name="phone_number" class="form-control" id="id_phone_number">
+        </div>
+        <div class="mb-3">
+            <label for="id_address" class="form-label">Địa chỉ (tùy chọn)</label>
+            <textarea name="address" class="form-control" id="id_address" rows="2"></textarea>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Đăng ký</button>
+        </div>
+    </form>
+    
+    <div class="auth-footer mt-3">
+        <p>Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập ngay</a></p>
+    </div>
+</div>
+{% endblock %}
