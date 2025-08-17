@@ -6,6 +6,8 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from .forms import UserRegisterForm
+from products.models import Product
+from categorys.models import Category
 
 def custom_login(request):
     if request.method == 'POST':
@@ -41,4 +43,17 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 def home(request):
-    return render(request, 'users/home.html')
+    # Lấy sản phẩm nổi bật
+    featured_products = Product.objects.order_by('created_at')[:4]
+    
+    # Lấy sản phẩm mới nhất
+    latest_products = Product.objects.order_by('created_at')[:8]
+    
+    # Lấy danh mục
+    categories = Category.objects.all()
+    
+    return render(request, 'home.html', {
+        'featured_products': featured_products,
+        'latest_products': latest_products,
+        'categories': categories
+    })

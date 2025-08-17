@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row head-background">
+    <div class="col-2">
+        <h1>Give your Workout <br>A New Style!</h1>
+        <p>Success isn't always about greatness. It's about consistency. Consistent<br>hard work gains success. Greatness will come.</p>
+        <a href="products.html" class="btn">Explore Now &#8594;</a>
+    </div>
+    <div class="col-2">
+        <img src="{%static 'image/image1.png'%}">
+    </div>
+</div>
+
+<!------------------------------ featured categories------------------------------>
+        <div class="categories">
+            <div class="small-container">
+                <div class="row">
+                <div class="col-3">
+                    <img src="{%static 'image/category-1.jpg'%}">
+                </div>
+                <div class="col-3">
+                    <img src="{%static 'image/category-2.jpg'%}">
+                </div>
+                <div class="col-3">
+                    <img src="{%static 'image/category-3 (2).jpg'%}">
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!------------------------------ featured Products------------------------------>
+    <div class="small-container">
+        <h2 class="title" >Sản phẩm nổi bật</h2>
+        <div class="row">
+            {%for product in  featured_products%}
+            <div class="col-4">
+                {% comment %} {% url 'product_detail' product.id %} {% endcomment %}
+                <a href="">  
+                    <img src="{{ product.image.url }}">
+                    <h4>{{ product.name }}</h4>
+                </a>
+                <div class="product-brand">
+                    {%if product.brand%}
+                        <span class="brand-tag">{{ product.brand.name }}</span>
+                    {% endif %}
+                </div>
+                <p>{{ product.price|floatformat:0 }}₫</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2 class="title" >Sản phẩm mới nhất</h2>
+            <div class="row">
+            {%for product in  featured_products%}
+            <div class="col-4">
+                {% comment %} {% url 'product_detail' product.id %} {% endcomment %}
+                <a href="">  
+                    <img src="{{ product.image.url }}">
+                    <h4>{{ product.name }}</h4>
+                </a>
+                <div class="product-brand">
+                    {%if product.brand%}
+                        <span class="brand-tag">{{ product.brand.name }}</span>
+                    {% endif %}
+                </div>
+                <p>{{ product.price|floatformat:0 }}₫</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+        <div class="offer">
+            <div class="small-container">
+                <div class="row">
+                    <div class="col-2">
+                        <img src="{%static 'image/image1.png'%}" class="offer-img">
+                    </div>
+                    <div class="col-2">
+                        <p>Exclusively Available on RedStore</p>
+                        <h1>Sports Shoes</h1>
+                        <small> Buy latest collections of sports shoes online on Redstore at best prices from top brands such as Adidas, Nike, Puma, Asics, and Sparx at your leisure at best prices. </small><br>
+                        <a href="" class="btn">Buy Now &#8594;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+
+{% endblock %}
