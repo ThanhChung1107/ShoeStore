@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="small-container single-product">
+    <div class="row">
+        <div class="col-2">
+            <img src="{{ product.image.url }}" width="100%" id="productImg">
+            
+            <!-- Thumbnail images (nếu có nhiều ảnh) -->
+            <div class="small-img-row">
+                {% if product.image2 %}
+                <div class="small-img-col">
+                    <img src="{{ product.image2.url }}" width="100%" class="small-img">
+                </div>
+                {% endif %}
+                {% if product.image3 %}
+                <div class="small-img-col">
+                    <img src="{{ product.image3.url }}" width="100%" class="small-img">
+                </div>
+                {% endif %}
+                {% if product.image4 %}
+                <div class="small-img-col">
+                    <img src="{{ product.image4.url }}" width="100%" class="small-img">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-2">
+            <p>Home / {{ product.category.name }}</p>
+            <h1>{{ product.name }}</h1>
+            <h4>{{ product.price|floatformat:2 }}₫</h4>
+            
+            {% comment %} action="{% url 'add_to_cart' %}" method="post" {% endcomment %}
+            <form >
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                
+                <div class="size-selection">
+                    <div class="size-options">
+                        {% for product_size in available_sizes %}
+                        <input type="radio" 
+                            id="size-{{ product_size.size.id }}" 
+                            name="size" 
+                            value="{{ product_size.size.id }}"
+                            class="size-option" 
+                            required>
+                        <label for="size-{{ product_size.size.id }}" 
+                            class="size-label {% if product_size.stock <= 0 %}out-of-stock{% endif %}"
+                            title="Còn {{ product_size.stock }} sản phẩm">
+                            {{ product_size.size.value }}
+                            {% if product_size.stock <= 0 %}
+                            <span class="stock-status">(Hết)</span>
+                            {% endif %}
+                        </label>
+                        {% empty %}
+                        <div class="no-sizes">Sản phẩm tạm thời hết hàng</div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="selected_size" id="selected_size" value="">
+                </div>
+                
+                <input type="number" name="quantity" value="1" min="1">
+                <button type="submit" class="btn">Add to Cart</button>
+            </form>
+            
+            <h3>Product Details <i class="fa fa-indent"></i></h3>
+            <br>
+            <p>{{ product.description }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products -->
+<div class="small-container">
+    <div class="row row-2">
+        <h2>Related Products</h2>
+        <a href="{% url 'product' %}?category={{ product.category.id }}"><p>View More</p></a>
+    </div>
+    
+    <div class="row">
+        {% for related in related_products %}
+        <div class="col-4">
+            <a href="{% url 'product_detail' related.id %}">
+                <img src="{{ related.image.url }}">
+                <h4>{{ related.name }}</h4>
+            </a>
+            <div class="rating">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= related.rating %}
+                        <i class="fa fa-star"></i>
+                    {% else %}
+                        <i class="fa fa-star-o"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <p>{{ related.price|floatformat:2 }}₫</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// JavaScript để xử lý thay đổi ảnh khi click vào thumbnail
+const productImg = document.getElementById("productImg");
+const smallImg = document.getElementsByClassName("small-img");
+
+for(let i = 0; i < smallImg.length; i++) {
+    smallImg[i].onclick = function() {
+        productImg.src = smallImg[i].src;
+    }
+}
+</script>
+{% endblock %}
