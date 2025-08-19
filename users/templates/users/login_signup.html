@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{%load static%}
+{% block extra_css %}
+     <link rel="stylesheet" href="{% static 'css/account_style.css' %}">
+{% endblock %}
+
+{%block content%}
+<div class="account-page">
+    <div class="container-page">
+        <div class="row-page">
+            <div class="col-2-page">
+                <img src="{% static 'image/image1.png' %}" width="100%">
+            </div>
+            <div class="col-2-page">
+                <div class="form-container">
+                    <div class="form-btn">
+                        <span onclick="login()" id="login-tab" class="active">Đăng nhập</span>
+                        <span onclick="register()" id="register-tab">Đăng ký</span>
+                        <hr id="Indicator">
+                    </div>
+
+                    <div class="form-wrapper">
+                        
+                        <form id="LoginForm" method="POST" action="{% url 'login' %}" class="active">
+                            {% csrf_token %}
+                            {% if next_url %}
+                            <input type="hidden" name="next" value="{{ next_url }}">
+                            {% endif %}
+                            <div class="form-group">
+                                <input type="text" placeholder="Tên đăng nhập" name="username" class="form-control" id="id_username" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" placeholder="Mật khẩu" name="password" class="form-control" id="id_password" required>
+                            </div>
+                            <button type="submit" class="btn-acc">Đăng nhập</button>
+                            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                        </form>
+
+                        <div class="scroll-container">
+                            <form id="RegForm" method="POST">
+                                {% csrf_token %}
+                                {% if next_url %}
+                                <input type="hidden" name="next" value="{{ next_url }}">
+                                {% endif %}
+                                <div class="form-group">
+                                    <input type="text" placeholder="Tên đăng nhập" name="username" class="form-control" id="reg_username" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="email" placeholder="Email" name="email" class="form-control" id="id_email" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" placeholder="Mật khẩu" name="password1" class="form-control" id="id_password1" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" placeholder="Xác nhận mật khẩu" name="password2" class="form-control" id="id_password2" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="tel" placeholder="Số điện thoại (tùy chọn)" name="phone_number" class="form-control" id="id_phone_number">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" name="address" placeholder="Địa chỉ (tùy chọn)" class="form-control" id="id_address">
+                                </div>
+                                <button type="submit" class="btn-acc">Đăng ký</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    
+    </div>
+</div>
+<div class="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>    
+<script>
+ function updateIndicator() {
+        const loginTab = document.getElementById('login-tab');
+        const indicator = document.getElementById('Indicator');
+        
+        if (loginTab.classList.contains('active')) {
+            indicator.style.left = loginTab.offsetLeft + 'px';
+            indicator.style.width = loginTab.offsetWidth + 'px';
+        } else {
+            const registerTab = document.getElementById('register-tab');
+            indicator.style.left = registerTab.offsetLeft + 'px';
+            indicator.style.width = registerTab.offsetWidth + 'px';
+        }
+    }
+
+    function login() {
+        const loginForm = document.getElementById('LoginForm');
+        const regForm = document.getElementById('RegForm');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+
+        // Switch tabs
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        updateIndicator();
+
+        // Switch forms
+        loginForm.classList.add('active');
+        regForm.classList.remove('active');
+    }
+
+    function register() {
+        const loginForm = document.getElementById('LoginForm');
+        const regForm = document.getElementById('RegForm');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+
+        // Switch tabs
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        updateIndicator();
+
+        // Switch forms
+        regForm.classList.add('active');
+        loginForm.classList.remove('active');
+    }
+
+    // Add form validation
+    document.getElementById('RegForm').addEventListener('submit', function(e) {
+        const password1 = document.getElementById('id_password1').value;
+        const password2 = document.getElementById('id_password2').value;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Mật khẩu xác nhận không khớp!');
+            return false;
+        }
+        
+        if (password1.length < 6) {
+            e.preventDefault();
+            alert('Mật khẩu phải có ít nhất 6 ký tự!');
+            return false;
+        }
+    });
+
+    // Add input focus effects
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-5px)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Initialize form
+    document.addEventListener('DOMContentLoaded', function() {
+        updateIndicator();
+        login(); // Default to login form
+        
+        // Add resize listener to update indicator position
+        window.addEventListener('resize', updateIndicator);
+    });
+// Tự động ẩn thông báo sau 5 giây
+    document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+
+    alerts.forEach(alert => {
+        // Thêm class show để bật animation
+        setTimeout(() => {
+            alert.classList.add('show');
+        }, 100); // delay nhỏ để trigger transition
+
+        // Ẩn và remove sau 5s
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 500); // xóa hẳn sau animation
+        }, 5000);
+    });
+});
+</script>    
+{%endblock%}

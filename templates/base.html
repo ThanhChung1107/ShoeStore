@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Redstore{% endblock %}</title>
+    {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -23,10 +24,24 @@
                     <li><a href="{%url 'product'%}">Products</a></li>
                     <li><a href="#">About</a></li>
                     <li><a href="#">Contact</a></li>
-                    <li><a href="">Account</a></li>
+                    <li>{% if user.is_authenticated %}
+                        <div class="user-menu">
+                            <span class="user-name">Xin chào, {{ user.username }}</span>
+                            <div class="user-dropdown">
+                                <a href="#">Hồ sơ</a>
+                                <a href="{% url 'logout' %}">Đăng xuất</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}">Tài khoản</a>
+                    {% endif %}</li>
                 </ul>
             </nav>
-            <a href=""><img src="{% static 'image/cart.png' %}" width="30px" height="30px"></a>
+            {% comment %} {% url 'cart' %} {% endcomment %} 
+            <a href="" class="cart-icon">
+                <img src="{% static 'image/cart.png' %}" width="30px" height="30px">
+                <span id="cart-count">0</span>
+            </a>
             <img src="{% static 'images/menu.png' %}" class="menu-icon" onClick="menutoggle()">
         </div>
     </div>
@@ -43,12 +58,12 @@
                     <h3>Download Our App</h3>
                     <p>Download App for Android and ios mobile phone.</p>
                     <div class="app-logo">
-                        <img src="images/play-store.png" alt="">
-                        <img src="images/app-store.png" alt="">
+                        <img src="{% static 'image/play-store.png' %}" alt="">
+                        <img src="{% static 'image/app-store.png' %}" alt="">
                     </div>
                 </div>
                 <div class="footer-col-2">
-                    <img src="images/logo-white.png">
+                    <img src="{% static 'image/logo-white.png' %}">
                     <p>Our Purpose Is To Sustainably Make the Pleasure and Benefits of Sports Accessible to the Many.</p>
                 </div>
                 <div class="footer-col-3">

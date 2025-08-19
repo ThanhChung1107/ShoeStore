@@ -97,7 +97,7 @@
                     <a href="{% url 'product_detail' product.id %}" class="product-link">
                         <div class="product-card" data-category="shoes" data-price="{{ product.price }}" data-rating="{{ product.rating }}" data-color="mixed">
                             <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                            <h4>{{ product.name }}</h4>
+                            <h4 class="product-name">{{ product.name }}</h4>
                             <div class="brand">
                                 {% if product.brand %}
                                 <span class="brand-tag">{{ product.brand.name }}</span>
@@ -262,18 +262,19 @@ function createProductCard(product, productId) {
     card.style.opacity = '0';
     card.style.transform = 'translateY(20px)';
     card.style.transition = 'all 0.3s ease';
-    
+
     card.innerHTML = `
-        <img src="${product.image}" alt="${product.name}">
-        <h4>
-            <a href="/product/${productId}/">${product.name}</a>
-        </h4>
+        <a href="/products/product/${productId}/" class="product-link">
+            <img src="${product.image}" alt="${product.name}">
+            <h4 class="product-name">${product.name}</h4>
+        </a>
         ${product.brand ? `<div class="brand"><span class="brand-tag">${product.brand_name || ''}</span></div>` : ''}
         <p>${parseInt(product.price).toLocaleString()}₫</p>
     `;
-    
+
     return card;
 }
+
 
 // Hàm debounce để tránh gọi API quá nhiều lần
 function debounce(func, wait) {

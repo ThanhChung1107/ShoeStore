@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'users',
     'products',
     'categorys',
+    'cart',
     'brands.apps.BrandsConfig',
 ]
 
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'users.middleware.RedirectToPreviousMiddleware',
 ]
 
 ROOT_URLCONF = 'ShoeStore.urls'
@@ -141,3 +143,4 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SESSION_SAVE_EVERY_REQUEST = True

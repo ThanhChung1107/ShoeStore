@@ -4,6 +4,9 @@ from .models import Product, Category, Brand, ProductSize
 from django.http import JsonResponse
 from django.shortcuts import redirect
 import json
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
 # Create your views here.
 def product(request):
     products = Product.objects.all().order_by('-created_at')
@@ -21,6 +24,30 @@ def product(request):
                                             'current_category': category_id,
 
                                             })
+
+def add_to_cart(request):
+    """View kiểm tra login và redirect"""
+    if request.method == 'POST':
+        # Kiểm tra user có đăng nhập không
+        if not request.user.is_authenticated:
+            # Lưu URL hiện tại để quay lại sau khi login
+            current_url = request.META.get('HTTP_REFERER') or '/'
+            request.session['next_url'] = current_url
+            
+            # Thông báo và chuyển đến trang login
+            messages.info(request, 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
+            return redirect('login')
+        
+        # User đã đăng nhập - xử lý logic add to cart của bạn ở đây
+        # ... your add to cart logic ...
+        
+        messages.success(request, 'Đã thêm sản phẩm vào giỏ hàng!')
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+    
+    # Nếu không phải POST
+    return redirect('/')
+
+
 def filter_products(request):
     """Xử lý AJAX request cho bộ lọc - KHÔNG RELOAD TRANG"""
     
