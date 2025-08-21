@@ -23,7 +23,7 @@
                         
                         <form id="LoginForm" method="POST" action="{% url 'login' %}" class="active">
                             {% csrf_token %}
-                            {% if next_url %}
+                            {% if next_url and next_url != '/favicon.ico' %}
                             <input type="hidden" name="next" value="{{ next_url }}">
                             {% endif %}
                             <div class="form-group">
@@ -39,7 +39,7 @@
                         <div class="scroll-container">
                             <form id="RegForm" method="POST">
                                 {% csrf_token %}
-                                {% if next_url %}
+                                {% if next_url and next_url != '/favicon.ico' %}
                                 <input type="hidden" name="next" value="{{ next_url }}">
                                 {% endif %}
                                 <div class="form-group">

@@ -3,43 +3,42 @@
 
 {% block content %}
 <div class="small-container cart-page">
-    <form method="post" action="{% url 'cart:update_cart' item.id %}">
-        {% csrf_token %}
-        <table>
-            <tr>
-                <th>Select</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Subtotal</th>
-            </tr>
-            {% for item in cart.items.all %}
-            <tr>
-                <td>
-                    <input type="checkbox" class="item-check" data-price="{{ item.subtotal }}" checked>
-                </td>
-                <td>
-                    <div class="cart-info">
-                        <img src="{{ item.product.imageurl }}">
-                        <div>
-                            <p>{{ item.product.name }}</p>
-                            <small>Giá: {{ item.product.price|floatformat:0 }}₫</small><br>
-                            <a href="{% url 'cart:remove_from_cart' item.id %}">Xóa</a>
-                        </div>
+    <table>
+        <tr>
+            <th>Select</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+        </tr>
+        {% for item in cart.items.all %}
+        <tr>
+            <td>
+                <input type="checkbox" class="item-check" data-price="{{ item.subtotal }}" checked>
+            </td>
+            <td>
+                <div class="cart-info">
+                    <img src="{{ item.product.image.url }}">
+                    <div>
+                        <p>{{ item.product.name }}</p>
+                        <small>Giá: {{ item.product.price|floatformat:0 }}₫</small><br>
+                        <a href="{% url 'remove_from_cart' item.id %}">Xóa</a>
                     </div>
-                </td>
-                <td>
-                    <form method="post" action="{% url 'cart:update_cart' item.id %}">
-                        {% csrf_token %}
-                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
-                        <button type="submit" class="btn-update">Cập nhật</button>
-                    </form>
-                </td>
-                <td>{{ item.subtotal|floatformat:0 }}₫</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </form>
+                </div>
+            </td>
+            <td>
+                <!-- Xóa form lồng, thay bằng link hoặc JavaScript -->
+                
+                <form method="post" action="{% url 'update_cart' item.id %}">
+                    {% csrf_token %}
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
+                    <button type="submit" class="btn-update">Cập nhật</button>
+                </form>
 
+            </td>
+            <td>{{ item.subtotal|floatformat:0 }}₫</td>
+        </tr>
+        {% endfor %}
+    </table>
     <div class="total-price">
         <table>
             <tr>
@@ -62,7 +61,7 @@
         <input type="hidden" name="selected_items" value="{{ item.id }}">
     {% endfor %} {% endcomment %}
     <div class="checkout-btn">
-        <button type="submit" class="btn">Thanh toán</button>
+        <button type="submit" class="btn-cart">Thanh toán</button>
     </div>
 </form>
 </div>
@@ -94,4 +93,4 @@
     updateTotal();
 </script>
 
-{%%}
+{%endblock%}

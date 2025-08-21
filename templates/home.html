@@ -16,17 +16,53 @@
 <!------------------------------ featured categories------------------------------>
         <div class="categories">
             <div class="small-container">
-                <div class="row">
-                <div class="col-3">
-                    <img src="{%static 'image/category-1.jpg'%}">
+                <div class="row-cate">
+                    <div class="col-3">
+                        <div class="flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img src="{% static 'image/category-1.jpg' %}" alt="Category 1">
+                                </div>
+                                <div class="flip-card-back">
+                                    <div class="back-content">
+                                        <h3>GIÀY THỂ THAO</h3>
+                                        <p>Khám phá bộ sưu tập mới nhất</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img src="{% static 'image/category-2.jpg' %}" alt="Category 2">
+                                </div>
+                                <div class="flip-card-back">
+                                    <div class="back-content">
+                                        <h3>GIÀY CHẠY BỘ</h3>
+                                        <p>Thoải mái cho mọi bước chân</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img src="{% static 'image/category-3 (2).jpg' %}" alt="Category 3">
+                                </div>
+                                <div class="flip-card-back">
+                                    <div class="back-content">
+                                        <h3>GIÀY BÓNG RỔ</h3>
+                                        <p>Hiệu suất đỉnh cao</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-3">
-                    <img src="{%static 'image/category-2.jpg'%}">
-                </div>
-                <div class="col-3">
-                    <img src="{%static 'image/category-3 (2).jpg'%}">
-                </div>
-            </div>
             </div>
         </div>
 
@@ -80,7 +116,6 @@
                     </div>
                     <div class="product-price">{{ product.price|floatformat:0 }}₫</div>
                 </div>
-                <div class="product-new-badge">Mới</div>
             </div>
             {% empty %}
             <div class="col-12">

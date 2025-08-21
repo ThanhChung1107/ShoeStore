@@ -28,7 +28,7 @@
                         <div class="user-menu">
                             <span class="user-name">Xin chào, {{ user.username }}</span>
                             <div class="user-dropdown">
-                                <a href="#">Hồ sơ</a>
+                                <a href="{% url 'account_detail' %}">Hồ sơ</a>
                                 <a href="{% url 'logout' %}">Đăng xuất</a>
                             </div>
                         </div>
@@ -38,11 +38,11 @@
                 </ul>
             </nav>
             {% comment %} {% url 'cart' %} {% endcomment %} 
-            <a href="" class="cart-icon">
+            <a href="{%url 'cart_detail'%}" class="cart-icon">
                 <img src="{% static 'image/cart.png' %}" width="30px" height="30px">
-                <span id="cart-count">0</span>
+                <span id="cart-count">{{cart_count}}</span>
             </a>
-            <img src="{% static 'images/menu.png' %}" class="menu-icon" onClick="menutoggle()">
+            <img src="{% static 'image/menu.png' %}" class="menu-icon" onClick="menutoggle()">
         </div>
     </div>
     </div>
@@ -99,6 +99,16 @@
         function menutoggle(){
             MenuItems.style.maxHeight = MenuItems.style.maxHeight == "0px" ? "200px" : "0px";
         }
+        window.addEventListener('cartUpdated', function(event) {
+    const cartCountEl = document.getElementById("cart-count");
+    if (cartCountEl) {
+        cartCountEl.textContent = event.detail.cartCount;
+        // Thêm hiệu ứng
+        cartCountEl.classList.add('updated');
+        setTimeout(() => cartCountEl.classList.remove('updated'), 300);
+    }
+});
+
     </script>
 </body>
 </html>

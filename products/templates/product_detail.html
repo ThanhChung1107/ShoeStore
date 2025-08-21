@@ -33,7 +33,7 @@
             <h4>{{ product.price|floatformat:2 }}₫</h4>
             
             {% comment %} action="{% url 'add_to_cart' %}" method="post" {% endcomment %}
-            <form action="{% url 'add_to_cart' %}" method="POST">
+            <form action="{% url 'add_to_cart' product.id %}" method="POST" id="add-to-cart-form">
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 
@@ -62,11 +62,7 @@
                 </div>
                 
                 <input type="number" name="quantity" value="1" min="1">
-                {% comment %} {% url 'cart:add_to_cart' product.id %} {% endcomment %}
-                <form method="post" action="">
-                    {% csrf_token %}
-                    <button type="submit" class="btn">Thêm vào giỏ</button>
-                </form>
+                <button type="submit" class="btn-add">Thêm vào giỏ</button>
             </form>
             
             <h3>Product Details <i class="fa fa-indent"></i></h3>
@@ -98,7 +94,9 @@
         {% endfor %}
     </div>
 </div>
-
+<div id="cart-notification">
+    <span id="notification-message"></span>
+</div>
 <script>
 // JavaScript để xử lý thay đổi ảnh khi click vào thumbnail
 const productImg = document.getElementById("productImg");
@@ -109,5 +107,64 @@ for(let i = 0; i < smallImg.length; i++) {
         productImg.src = smallImg[i].src;
     }
 }
+document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
+    
+    const form = this;
+    const formData = new FormData(form);
+    
+    // Thêm header để xác định AJAX request
+    const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+    };
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: headers
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Hiển thị thông báo
+            showNotification(data.message);
+            
+            // Cập nhật số lượng giỏ hàng (nếu có)
+            if (data.cart_count !== undefined) {
+                updateCartCount(data.cart_count);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Có lỗi xảy ra!', 'error');
+    });
+});
+
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('cart-notification');
+    const messageEl = document.getElementById('notification-message');
+
+    messageEl.textContent = message;
+    notification.style.backgroundColor = type === 'success' ? 'green' : 'red';
+
+    // Hiện thông báo
+    notification.classList.add('show');
+
+    // Ẩn sau 3 giây
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+
+function updateCartCount(count) {
+    // Cập nhật số lượng giỏ hàng trên giao diện
+    const cartCountEl = document.querySelector('.cart-count');
+    if (cartCountEl) {
+        cartCountEl.textContent = count;
+    }
+}
+
 </script>
 {% endblock %}

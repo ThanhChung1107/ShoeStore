@@ -10,5 +10,6 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     
     def product_count(self, obj):
-        return obj.products.count()
+        # dùng default reverse relation
+        return obj.product_set.count()
     product_count.short_description = 'Số sản phẩm'

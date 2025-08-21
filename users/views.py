@@ -9,11 +9,12 @@ from django.contrib import messages
 from .forms import UserRegisterForm
 from products.models import Product
 from categorys.models import Category
-
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from .models import User
 
 def custom_login(request):
     # Nếu user đã đăng nhập, chuyển hướng về trang chủ
@@ -72,50 +73,7 @@ def custom_login(request):
         'next_url': next_url,
         'active_tab': 'login'
     })
-    # Nếu user đã đăng nhập, chuyển hướng về trang chủ
-    if request.user.is_authenticated:
-        next_url = request.session.get('next_url', '/')
-        if 'next_url' in request.session:
-            del request.session['next_url']
-        return redirect(next_url)
     
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                
-                # Lấy next_url từ nhiều nguồn
-                next_url = (
-                    request.session.get('next_url') or
-                    request.POST.get('next') or 
-                    request.GET.get('next') or 
-                    '/'
-                )
-                
-                # Xóa next_url khỏi session
-                if 'next_url' in request.session:
-                    del request.session['next_url']
-                    
-                messages.success(request, 'Đăng nhập thành công!')
-                return redirect(next_url)
-        else:
-            # Hiển thị lỗi cụ thể từ form
-            for error in form.errors.values():
-                messages.error(request, error)
-    else:
-        form = AuthenticationForm()
-    
-    # Truyền next_url từ session vào template
-    next_url = request.session.get('next_url', '')
-    return render(request, 'users/login_signup.html', {
-        'login_form': form,  # Đổi tên biến để phân biệt
-        'next_url': next_url,
-        'active_tab': 'login'  # Thêm biến để xác định tab active
-    })
 def custom_logout(request):
     logout(request)
     # Chuyển hướng đến trang chủ hoặc trang đăng nhập
@@ -172,3 +130,10 @@ def home(request):
         'latest_products': latest_products,
         'categories': categories
     })
+@login_required
+def account_detail(request):
+    user = get_object_or_404(User,id=request.user.id)
+    context = {
+        'user_profile': user,
+    }
+    return render(request,'users/account_detail.html',context)

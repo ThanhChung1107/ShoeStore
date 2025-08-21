@@ -131,9 +131,26 @@ p{
     border-radius: 30px;
     transition:background 0.5s;
 }
+.btn-add {
+    display: inline-block;
+    background: #ff523b;
+    color: #fff;
+    padding:8px 16px;
+    margin: 30px 0px;
+    border-radius: 10px;
+    transition:background 0.5s;
+    border: none;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.btn-add:hover {
+    background: #fe3116;
+}
 .btn:hover{
     background: #563434;
 }
+
 .header{
     background-color: #ffd6d6;
 }
@@ -169,9 +186,12 @@ p{
     transition: transform 0.5s;
 }
 .col-4 img{
-    width:100%;
+    
 }
-
+.col-4 .product-image {
+    width: 217px;
+    height: 217px;
+}
 .title{
     text-align: center;
     margin: 0 auto 80px;
@@ -202,6 +222,10 @@ h4{
 
 .col-4:hover{
     transform:translateY(-5px);
+}
+.product-price {
+    color: #e74c3c;
+    font-weight: 600;
 }
 
 /*-----------------------offer -----------------------*/
@@ -416,9 +440,11 @@ select:focus{
 
 
 /*-----------------------single product details -----------------------*/
-
+.col-2 form {
+    border: none;
+}
 .single-product{
-    margin-top: 80px;
+    margin-top: 40px;
 }
 .single-product .col-2 img{
     padding:0;
@@ -466,11 +492,57 @@ input:focus{
         /*------------------------------ cart items ------------------------------*/
 .cart-page{
     margin: 80px auto;
+    border: none;
 }
-
+.cart-page form {
+    border: none;
+}
 table{
     width: 100%;
     border-collapse: collapse;
+}
+.item-check {
+    appearance: none;       /* ẩn checkbox mặc định */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    width: 20px;
+    height: 20px;
+    border: 2px solid #555;
+    border-radius: 4px;     /* bo góc, nếu muốn tròn thì dùng 50% */
+    background: #fff;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Khi hover */
+.item-check:hover {
+    border-color: #007bff;
+}
+
+/* Khi được chọn */
+.item-check:checked {
+    background: #007bff;   /* nền xanh */
+    border-color: #007bff;
+}
+
+/* Vẽ dấu tick khi checked */
+.item-check:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .cart-info{
@@ -515,6 +587,36 @@ td:last-child{
 }
 th:last-child{
     text-align: right;
+}
+button.btn-cart {
+    background: #ff523b;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-update {
+    background: #ff523b;
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button.btn-cart:hover {
+    background: #f52d13;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.checkout-btn {
+    margin-left: 860px;
 }
 
 
@@ -952,3 +1054,188 @@ form {
     border: 1px solid #ccc;  /* cho dễ nhìn */
 }
 
+#cart-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: green;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 2px;
+    z-index: 1000;
+
+    /* ban đầu ẩn đi bằng dịch sang phải */
+    transform: translateX(150%);
+    opacity: 0;
+
+    /* hiệu ứng mượt */
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+#cart-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.categories {
+    padding: 60px 0;
+}
+
+.row-cate{
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    perspective: 1000px;
+}
+
+.col-3 {
+    flex: 0 0 calc(33.333% - 30px);
+    max-width: calc(33.333% - 30px);
+}
+
+.flip-card {
+    background-color: transparent;
+    width: 90%;
+    height: 300px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border-radius:2px;
+}
+
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.flip-card-front {
+    background: linear-gradient(45deg, #2c3e50, #4ca1af);
+}
+
+.flip-card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.flip-card:hover .flip-card-front img {
+    transform: scale(1.1);
+}
+
+.flip-card-back {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.back-content {
+    padding: 20px;
+    transform: translateZ(50px);
+}
+
+.back-content h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.back-content p {
+    font-size: 16px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Hiệu ứng ánh sáng */
+.flip-card::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #2c3e50, #4ca1af);
+    background-size: 400% 400%;
+    z-index: -1;
+    border-radius: 2px;
+    animation: gradientShift 3s ease infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.flip-card:hover::before {
+    opacity: 0.7;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Hiệu ứng đổ bóng nâng cao */
+.flip-card-inner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.3) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 2px;
+}
+
+.flip-card:hover .flip-card-inner::after {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .col-3 {
+        flex: 0 0 calc(50% - 20px);
+        max-width: calc(50% - 20px);
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .flip-card {
+        height: 250px;
+    }
+    
+    .back-content h3 {
+        font-size: 20px;
+    }
+    
+    .back-content p {
+        font-size: 14px;
+    }
+}

@@ -25,27 +25,7 @@ def product(request):
 
                                             })
 
-def add_to_cart(request):
-    """View kiểm tra login và redirect"""
-    if request.method == 'POST':
-        # Kiểm tra user có đăng nhập không
-        if not request.user.is_authenticated:
-            # Lưu URL hiện tại để quay lại sau khi login
-            current_url = request.META.get('HTTP_REFERER') or '/'
-            request.session['next_url'] = current_url
-            
-            # Thông báo và chuyển đến trang login
-            messages.info(request, 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
-            return redirect('login')
-        
-        # User đã đăng nhập - xử lý logic add to cart của bạn ở đây
-        # ... your add to cart logic ...
-        
-        messages.success(request, 'Đã thêm sản phẩm vào giỏ hàng!')
-        return redirect(request.META.get('HTTP_REFERER', '/'))
-    
-    # Nếu không phải POST
-    return redirect('/')
+
 
 
 def filter_products(request):
