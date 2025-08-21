@@ -5,12 +5,19 @@ from .models import Cart, CartItem
 from django.contrib import messages
 from django.http import JsonResponse
 
-@login_required
-def cart_detail(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from .models import Cart
 
-    return render(request, 'cart.html', {'cart': cart,
-                                         'cart_count': cart.items.count()})
+def cart_detail(request):
+    if not request.user.is_authenticated:
+        messages.warning(request, "Vui lòng đăng nhập để xem giỏ hàng!")
+        request.session['next_url'] = 'cart_detail'  # để sau khi login quay lại giỏ
+        return redirect('login')
+
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    return render(request, 'cart.html', {'cart': cart})
+
 
 def add_to_cart(request, product_id):
     if request.method != "POST":

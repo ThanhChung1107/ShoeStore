@@ -81,16 +81,26 @@
     
     <div class="row">
         {% for related in related_products %}
-        <div class="col-4">
-            <a href="{% url 'product_detail' related.id %}">
-                <img src="{{ related.image.url }}">
-                <h4 class="product-name">{{ related.name }}</h4>
-            </a>
-            <div class="brand">
-                <span>{{related.brand}}</span>
+        <div class="col-4 product-item">
+                <a href="{% url 'product_detail' related.id %}">
+                    <img src="{{ related.image.url }}" alt="{{ related.name }}" class="product-image">
+                    <h4 class="product-name">{{ product.name }}</h4>
+                </a>
+                <div class="product-meta">
+                    <div class="product-brand">
+                        {% if related.brand %}
+                        <span class="brand-tag">{{ related.brand.name }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-price">{{ related.price|floatformat:0 }}₫</div>
+                    {% if related.old_price %}
+                    <div class="product-old-price">{{ related.old_price|floatformat:0 }}₫</div>
+                    {% endif %}
+                </div>
+                {% if related.discount_percent %}
+                <div class="product-badge">-{{ related.discount_percent }}%</div>
+                {% endif %}
             </div>
-            <p>{{ related.price|floatformat:2 }}₫</p>
-        </div>
         {% endfor %}
     </div>
 </div>

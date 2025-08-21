@@ -34,7 +34,7 @@ class User(AbstractUser):
     address = models.TextField(blank=True)
     avatar = models.ImageField(
         upload_to=user_avatar_path, 
-        default='avatars/default_avatar.png',
+        default='avatars/default_avatar.jpg',
         blank=True,
         null=True
     )
@@ -49,7 +49,7 @@ class User(AbstractUser):
         if self.pk:
             try:
                 old_avatar = User.objects.get(pk=self.pk).avatar
-                if old_avatar and old_avatar != self.avatar and old_avatar.name != 'avatars/default_avatar.png':
+                if old_avatar and old_avatar != self.avatar and old_avatar.name != 'avatars/default_avatar.jpg':
                     if os.path.isfile(old_avatar.path):
                         os.remove(old_avatar.path)
             except User.DoesNotExist:
@@ -58,7 +58,7 @@ class User(AbstractUser):
 
     def delete(self, *args, **kwargs):
         # Xóa avatar khi user bị xóa
-        if self.avatar and self.avatar.name != 'avatars/default_avatar.png':
+        if self.avatar and self.avatar.name != 'avatars/default_avatar.jpg':
             if os.path.isfile(self.avatar.path):
                 os.remove(self.avatar.path)
         super().delete(*args, **kwargs)

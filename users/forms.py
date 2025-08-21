@@ -17,3 +17,15 @@ class UserRegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+    
+class AvatarUploadForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['avatar']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['avatar'].widget.attrs.update({
+            'class': 'avatar-input',
+            'accept': 'image/*'
+        })

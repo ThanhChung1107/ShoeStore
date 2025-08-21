@@ -8,4 +8,6 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('register/', views.register, name='register'),
     path('account/',views.account_detail,name = 'account_detail'),
+    path('upload-avartar/',views.upload_avatar,name='upload_avatar'),
+    path('upload_profile',views.update_profile,name='update_profile'),
 ]

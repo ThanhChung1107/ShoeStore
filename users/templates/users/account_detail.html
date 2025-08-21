@@ -16,7 +16,17 @@
                 <div class="avatar-container">
                     <img src="{{ user_profile.avatar.url }}" alt="Avatar" class="user-avatar">
                     <div class="avatar-overlay">
-                        <span class="avatar-text">Ảnh đại diện</span>
+                        <label for="avatar-upload" class="avatar-upload-label">
+                            <i class="fas fa-camera"></i>
+                            <span class="avatar-text">Thay đổi avatar</span>
+                        </label>
+                        <form  id="avatar-upload-form" style="display: none;">
+                             {% csrf_token %}
+                            <input type="file" id="avatar-upload" name="avatar" accept="image/*">
+                        </form>    
+                    </div>
+                    <div class="avatar-loading" id="avatar-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
                     </div>
                 </div>
                 <h2 class="username">{{ user_profile.username }}</h2>
@@ -74,17 +84,51 @@
             </div>
             
             <div class="action-buttons">
-                <a href="#" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="openEditModal()">
                     <i class="fas fa-edit"></i> Chỉnh sửa thông tin
-                </a>
-                <a href="#" class="btn btn-secondary">
-                    <i class="fas fa-lock"></i> Đổi mật khẩu
-                </a>
+                </button>
             </div>
         </div>
     </div>
 </div>
-
+<!-- Modal chỉnh sửa thông tin -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Chỉnh sửa thông tin cá nhân</h2>
+            <span class="close" onclick="closeEditModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editForm" method="post" action="{% url 'update_profile' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="first_name">Họ</label>
+                    <input type="text" id="first_name" name="first_name" value="{{ user_profile.first_name }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Tên</label>
+                    <input type="text" id="last_name" name="last_name" value="{{ user_profile.last_name }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user_profile.email }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Số điện thoại</label>
+                    <input type="tel" id="phone_number" name="phone_number" value="{{ user_profile.phone_number }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="address">Địa chỉ</label>
+                    <textarea id="address" name="address" class="form-textarea" rows="3">{{ user_profile.address }}</textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Hủy</button>
+                    <button type="submit" class="btn btn-save">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
@@ -103,5 +147,200 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarUpload = document.getElementById('avatar-upload');
+    const avatarForm = document.getElementById('avatar-upload-form');
+    const avatarLoading = document.getElementById('avatar-loading');
+    const userAvatar = document.getElementById('user-avatar');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    avatarUpload.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            
+            // Kiểm tra kích thước file (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Kích thước file không được vượt quá 5MB');
+                this.value = '';
+                return;
+            }
+            
+            // Kiểm tra định dạng file
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)');
+                this.value = '';
+                return;
+            }
+            
+            // Hiển thị loading
+            avatarLoading.style.display = 'block';
+            
+            // Tạo FormData
+            const formData = new FormData();
+            formData.append('avatar', file);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            // Gửi request AJAX
+            fetch('{% url "upload_avatar" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                avatarLoading.style.display = 'none';
+                
+                if (data.success) {
+                    // Cập nhật ảnh đại diện
+                    userAvatar.src = data.avatar_url + '?t=' + new Date().getTime();
+                    
+                    // Hiển thị thông báo
+                    showNotification('Cập nhật avatar thành công!', 'success');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                avatarLoading.style.display = 'none';
+                showNotification('Có lỗi xảy ra khi upload avatar', 'error');
+                console.error('Error:', error);
+            });
+        }
+    });
+
+    function showNotification(message, type) {
+        // Tạo thông báo tạm thời
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
+            font-weight: 500;
+        `;
+        
+        if (type === 'success') {
+            notification.style.background = '#27ae60';
+        } else {
+            notification.style.background = '#e74c3c';
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Tự động xóa sau 3 giây
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // Hiệu ứng hover cho avatar
+    const avatarContainer = document.querySelector('.avatar-container');
+    avatarContainer.addEventListener('mouseenter', function() {
+        this.querySelector('.avatar-overlay').style.opacity = '1';
+    });
+    
+    avatarContainer.addEventListener('mouseleave', function() {
+        this.querySelector('.avatar-overlay').style.opacity = '0';
+    });
+});
+</script>
+<script>
+// Hàm mở modal
+function openEditModal() {
+    document.getElementById('editModal').style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Ngăn scroll background
+}
+
+// Hàm đóng modal
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Cho phép scroll lại
+}
+
+// Đóng modal khi click bên ngoài
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target === modal) {
+        closeEditModal();
+    }
+}
+
+// Xử lý submit form với AJAX
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('.btn-save');
+    const originalText = submitBtn.innerHTML;
+    
+    // Hiển thị loading
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+    submitBtn.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Cập nhật thông tin thành công!', 'success');
+            closeEditModal();
+            // Reload page để cập nhật thông tin mới
+            setTimeout(() => { location.reload(); }, 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Có lỗi xảy ra khi cập nhật thông tin', 'error');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Hiển thị thông báo
+function showNotification(message, type) {
+    // Code hiển thị thông báo (giữ nguyên từ phần trước)
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        color: white;
+        z-index: 1000;
+        font-weight: 500;
+    `;
+    
+    if (type === 'success') {
+        notification.style.background = '#27ae60';
+    } else {
+        notification.style.background = '#e74c3c';
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 </script>
 {% endblock %}
