@@ -3,67 +3,64 @@
 
 {% block content %}
 <div class="small-container cart-page">
-    <table>
-        <tr>
-            <th>Select</th>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-        </tr>
-        {% for item in cart.items.all %}
-        <tr>
-            <td>
-                <input type="checkbox" class="item-check" data-price="{{ item.subtotal }}" checked>
-            </td>
-            <td>
-                <div class="cart-info">
-                    <img src="{{ item.product.image.url }}">
-                    <div>
-                        <p>{{ item.product.name }}</p>
-                        <small>Giá: {{ item.product.price|floatformat:0 }}₫</small><br>
-                        <a href="{% url 'remove_from_cart' item.id %}">Xóa</a>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <!-- Xóa form lồng, thay bằng link hoặc JavaScript -->
-                
-                <form method="post" action="{% url 'update_cart' item.id %}">
-                    {% csrf_token %}
-                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
-                    <button type="submit" class="btn-update">Cập nhật</button>
-                </form>
-
-            </td>
-            <td>{{ item.subtotal|floatformat:0 }}₫</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <div class="total-price">
+    <form id="cart-form" method="post" action="{% url 'prepare_checkout' %}">
+        {% csrf_token %}
         <table>
             <tr>
-                <td>Subtotal</td>
-                <td><span id="subtotal">0</span>₫</td>
+                <th>Chọn</th>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Thành tiền</th>
             </tr>
+            {% for item in cart.items.all %}
             <tr>
-                <td>Giảm giá</td>
-                <td>--:--</td>
+                <td>
+                    <input type="checkbox" name="selected_items" value="{{ item.id }}" 
+                           class="item-check" data-price="{{ item.subtotal }}" checked>
+                </td>
+                <td>
+                    <div class="cart-info">
+                        <img src="{{ item.product.image.url }}">
+                        <div>
+                            <p>{{ item.product.name }}</p>
+                            <small>Giá: {{ item.product.price|floatformat:0 }}₫</small><br>
+                            <a href="{% url 'remove_from_cart' item.id %}" class="remove-link" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="quantity-controls">
+                        <button type="button" class="qty-btn minus" onclick="updateQuantity({{ item.id }}, -1)">-</button>
+                        <span class="quantity-display" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                        <button type="button" class="qty-btn plus" onclick="updateQuantity({{ item.id }}, 1)">+</button>
+                    </div>
+                </td>
+                <td id="subtotal-{{ item.id }}">{{ item.subtotal|floatformat:0 }}₫</td>
             </tr>
-            <tr>
-                <td>Total</td>
-                <td><span id="total">0</span>₫</td>
-            </tr>
+            {% endfor %}
         </table>
-    </div>
-    <form>
-    {% csrf_token %}
-    {% comment %} {% for item in cart.items.all %}
-        <input type="hidden" name="selected_items" value="{{ item.id }}">
-    {% endfor %} {% endcomment %}
-    <div class="checkout-btn">
-        <button type="submit" class="btn-cart">Thanh toán</button>
-    </div>
-</form>
+        
+        <div class="total-price">
+            <table>
+                <tr>
+                    <td>Tạm tính</td>
+                    <td><span id="subtotal">0</span>₫</td>
+                </tr>
+                <tr>
+                    <td>Giảm giá</td>
+                    <td>--:--</td>
+                </tr>
+                <tr>
+                    <td><strong>Tổng cộng</strong></td>
+                    <td><strong><span id="total">0</span>₫</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="checkout-btn">
+            <button type="submit" class="btn-cart">Thanh toán</button>
+        </div>
+    </form>
 </div>
 
 <script>
@@ -79,18 +76,156 @@
             }
         });
 
-        // cập nhật HTML
         document.getElementById("subtotal").textContent = formatCurrency(subtotal);
-        document.getElementById("total").textContent = formatCurrency(subtotal); // ở đây có thể + thuế, phí ship
+        document.getElementById("total").textContent = formatCurrency(subtotal);
     }
 
-    // lắng nghe tick
+    // Cập nhật số lượng bằng AJAX
+    function updateQuantity(itemId, change) {
+        const quantityElement = document.getElementById(`qty-${itemId}`);
+        let currentQuantity = parseInt(quantityElement.textContent);
+        let newQuantity = currentQuantity + change;
+        
+        if (newQuantity < 1) newQuantity = 1;
+        
+        // Gửi request AJAX
+        fetch(`/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                quantity: newQuantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Cập nhật số lượng và thành tiền
+                quantityElement.textContent = newQuantity;
+                document.getElementById(`subtotal-${itemId}`).textContent = formatCurrency(data.new_subtotal) + '₫';
+                
+                // Cập nhật data-price cho checkbox
+                const checkbox = document.querySelector(`.item-check[value="${itemId}"]`);
+                if (checkbox) {
+                    checkbox.dataset.price = data.new_subtotal;
+                }
+                
+                // Cập nhật tổng tiền
+                updateTotal();
+            } else {
+                alert('Có lỗi xảy ra: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi kết nối');
+        });
+    }
+
+    // Xử lý submit form thanh toán
+    document.getElementById('cart-form').addEventListener('submit', function(e) {
+        const selectedItems = document.querySelectorAll('.item-check:checked');
+        if (selectedItems.length === 0) {
+            e.preventDefault();
+            alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
+        }
+    });
+
+    // Khởi tạo
     document.querySelectorAll('.item-check').forEach(cb => {
         cb.addEventListener('change', updateTotal);
     });
 
-    // chạy 1 lần khi load
     updateTotal();
 </script>
 
-{%endblock%}
+<style>
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.qty-btn:hover {
+    background: #e9ecef;
+    border-color: #3498db;
+}
+
+.quantity-display {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.remove-link {
+    color: #e74c3c;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.remove-link:hover {
+    text-decoration: underline;
+}
+
+.cart-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cart-info img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.checkout-btn {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-cart {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cart:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cart-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .quantity-controls {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

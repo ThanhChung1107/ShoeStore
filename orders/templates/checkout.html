@@ -1,0 +1,478 @@
+<!-- orders/checkout.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="checkout-header">
+        <h1>Thanh Toán</h1>
+        <p>Hoàn tất đơn hàng của bạn</p>
+    </div>
+
+    <div class="checkout-content">
+        <!-- Phần danh sách sản phẩm -->
+        <div class="cart-items-section">
+            <h2>Sản phẩm đã chọn ({{ selected_items.count }} sản phẩm)</h2>
+            <div class="cart-items-list">
+                {% for item in selected_items %}
+                <div class="checkout-cart-item">
+                    <div class="item-image">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                    </div>
+                    <div class="item-details">
+                        <h4>{{ item.product.name }}</h4>
+                        <p class="item-price">{{ item.product.price|floatformat:0 }}₫</p>
+                    </div>
+                    <div class="item-quantity">
+                        <span class="quantity">Số lượng: {{ item.quantity }}</span>
+                    </div>
+                    <div class="item-total">
+                        <strong>{{ item.subtotal|floatformat:0 }}₫</strong>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-items">
+                    <p>Không có sản phẩm nào được chọn</p>
+                    <a href="{% url 'cart_detail' %}" class="btn-back-to-cart">Quay lại giỏ hàng</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Phần form thanh toán -->
+        <div class="checkout-form">
+            <h2>Thông tin giao hàng</h2>
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_shipping_address">Địa chỉ giao hàng *</label>
+                    {{ form.shipping_address }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Phương thức thanh toán *</label>
+                    <div class="payment-methods">
+                        {% for value, label in form.payment_method.field.choices %}
+                        <div class="payment-method">
+                            <input type="radio" name="payment_method" id="payment_{{ value }}" 
+                                   value="{{ value }}" {% if form.payment_method.value == value %}checked{% endif %}>
+                            <label for="payment_{{ value }}">
+                                <i class="fas fa-{% if value == 'cod' %}money-bill-wave{% else %}university{% endif %}"></i>
+                                {{ label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="order-summary">
+                    <h3>Tóm tắt đơn hàng</h3>
+                    <div class="summary-item">
+                        <span>Tạm tính:</span>
+                        <span>{{ selected_total|floatformat:0 }}₫</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span>Tổng cộng:</span>
+                        <span>{{ selected_total|floatformat:0 }}₫</span>
+                    </div>
+                </div>
+                
+                <div class="checkout-actions">
+                    <a href="{% url 'cart_detail' %}" class="btn-back">
+                        <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
+                    </a>
+                    <button type="submit" class="btn-checkout">
+                        <i class="fas fa-shopping-cart"></i> Đặt hàng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.checkout-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.checkout-header h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+}
+
+.checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.cart-items-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    height: fit-content;
+}
+
+.cart-items-section h2 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+.cart-items-list {
+    max-height: auto;
+    overflow-y: auto;
+}
+
+.checkout-cart-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap: 15px;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s ease;
+}
+
+.checkout-cart-item:hover {
+    background-color: #f8f9fa;
+}
+
+.checkout-cart-item:last-child {
+    border-bottom: none;
+}
+
+.item-image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.item-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: #2c3e50;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4em;
+    max-height: 2.8em;
+}
+
+.item-price {
+    color: #e74c3c;
+    font-weight: 500;
+    margin: 0;
+}
+
+.item-quantity {
+    text-align: center;
+}
+
+.quantity {
+    background: #f8f9fa;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.item-total {
+    text-align: right;
+    font-size: 1.1rem;
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.checkout-form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+}
+
+.checkout-form form {
+    width: auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.payment-methods {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.payment-method {
+    flex: 1;
+    min-width: 200px;
+}
+
+.payment-method input[type="radio"] {
+    display: none;
+}
+
+.payment-method label {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-method label:hover {
+    border-color: #3498db;
+    transform: translateY(-2px);
+}
+
+.payment-method input[type="radio"]:checked + label {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e8f4fd 0%, #d4e6f1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+}
+
+.payment-method label i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: #3498db;
+}
+
+.order-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 30px 0;
+}
+
+.order-summary h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 10px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 5px 0;
+}
+
+.summary-item.total {
+    border-top: 2px solid #dee2e6;
+    padding-top: 15px;
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: #27ae60;
+}
+
+.checkout-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.btn-back {
+    padding: 16px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-checkout {
+    flex: 1;
+    padding: 16px;
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-checkout:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
+.btn-checkout:active {
+    transform: translateY(-1px);
+}
+
+.no-items {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.btn-back-to-cart {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 12px 24px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-back-to-cart:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .checkout-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .checkout-cart-item {
+        grid-template-columns: 60px 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 10px;
+    }
+    
+    .item-total {
+        grid-column: 3;
+        grid-row: 1;
+    }
+    
+    .item-quantity {
+        grid-column: 1 / -1;
+        text-align: left;
+    }
+    
+    .checkout-actions {
+        flex-direction: column;
+    }
+    
+    .btn-back {
+        order: 2;
+    }
+    
+    .btn-checkout {
+        order: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .checkout-container {
+        padding: 15px;
+    }
+    
+    .payment-methods {
+        flex-direction: column;
+    }
+    
+    .payment-method {
+        min-width: 100%;
+    }
+    
+    .checkout-cart-item {
+        grid-template-columns: 50px 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .item-total {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: left;
+    }
+    
+    .item-quantity {
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+}
+
+/* Scrollbar styling */
+.cart-items-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cart-items-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.cart-items-list::-webkit-scrollbar-thumb {
+    background: #c4c4c4;
+    border-radius: 10px;
+}
+
+.cart-items-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+{% endblock %}

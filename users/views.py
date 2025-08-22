@@ -88,39 +88,50 @@ def custom_logout(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Đăng ký thành công!')
-            
-            # Lấy next_url từ session nếu có
-            next_url = request.session.get('next_url', 'home')
-            if 'next_url' in request.session:
-                del request.session['next_url']
-                
-            return redirect(next_url)
+        # Lấy data trực tiếp từ request.POST
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        phone_number = request.POST.get('phone_number')
+        address = request.POST.get('address')
+        
+        # Validate thủ công
+        if password1 != password2:
+            messages.error(request, 'Mật khẩu xác nhận không khớp!')
+        elif User.objects.filter(username=username).exists():
+            messages.error(request, 'Tên đăng nhập đã tồn tại!')
+        elif User.objects.filter(email=email).exists():
+            messages.error(request, 'Email đã được sử dụng!')
         else:
-            # Xử lý lỗi cụ thể
-            if 'username' in form.errors:
-                messages.error(request, 'Tên đăng nhập đã tồn tại!')
-            elif 'email' in form.errors:
-                messages.error(request, 'Email đã được sử dụng!')
-            elif 'password2' in form.errors:
-                messages.error(request, 'Mật khẩu xác nhận không khớp!')
-            else:
-                # Hiển thị tất cả lỗi khác
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, f"{error}")
-    else:
-        form = UserRegisterForm()
+            try:
+                # Tạo user mới
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password1
+                )
+                if phone_number:
+                    user.phone_number = phone_number
+                if address:
+                    user.address = address
+                user.save()
+                
+                login(request, user)
+                messages.success(request, 'Đăng ký thành công!')
+                
+                next_url = request.session.get('next_url', '/')
+                if 'next_url' in request.session:
+                    del request.session['next_url']
+                    
+                return redirect(next_url)
+            except Exception as e:
+                messages.error(request, f'Có lỗi xảy ra: {str(e)}')
     
-    # Truyền next_url từ session vào template
     next_url = request.session.get('next_url', '')
     return render(request, 'users/login_signup.html', {
-        'form': form,
-        'next_url': next_url
+        'next_url': next_url,
+        'active_tab': 'register'
     })
 def home(request):
     # Lấy sản phẩm nổi bật

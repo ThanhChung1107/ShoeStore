@@ -4,7 +4,8 @@ from products.models import Product
 from .models import Cart, CartItem
 from django.contrib import messages
 from django.http import JsonResponse
-
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from .models import Cart
@@ -64,20 +65,58 @@ def remove_from_cart(request, item_id):
     return redirect('cart_detail')
 
 @login_required
+@csrf_exempt
+@require_POST
 def update_cart(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-    quantity = request.POST.get('quantity', 1)
-    
+    """Cập nhật số lượng sản phẩm bằng AJAX"""
     try:
-        quantity = int(quantity)
-        if quantity > 0:
-            cart_item.quantity = quantity
-            cart_item.save()
-            messages.success(request, "Đã cập nhật số lượng")
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Xử lý AJAX request
+            import json
+            data = json.loads(request.body)
+            new_quantity = int(data.get('quantity', 1))
+            
+            if new_quantity > 0:
+                cart_item.quantity = new_quantity
+                cart_item.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'new_quantity': new_quantity,
+                    'new_subtotal': cart_item.subtotal,
+                    'message': 'Cập nhật thành công'
+                })
+            else:
+                cart_item.delete()
+                return JsonResponse({
+                    'success': True,
+                    'deleted': True,
+                    'message': 'Đã xóa sản phẩm'
+                })
         else:
-            cart_item.delete()
-            messages.success(request, "Đã xóa sản phẩm khỏi giỏ hàng")
-    except ValueError:
-        messages.error(request, "Số lượng không hợp lệ")
+            # Xử lý form thông thường
+            quantity = request.POST.get('quantity', 1)
+            # ... code cũ ...
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
+
+@login_required
+def prepare_checkout(request):
+    if request.method == 'POST':
+        selected_items = request.POST.getlist('selected_items')
+        
+        if not selected_items:
+            messages.error(request, "Vui lòng chọn ít nhất một sản phẩm để thanh toán!")
+            return redirect('cart_detail')
+        
+        # Lưu danh sách sản phẩm đã chọn vào session
+        request.session['selected_items'] = selected_items
+        return redirect('checkout')
     
     return redirect('cart_detail')

@@ -1,6 +1,10 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.http import JsonResponse
+
+def devtools_json(request):
+    return JsonResponse({})
 
 urlpatterns = [
     path('', views.home, name='home'),  # Thêm dòng này
@@ -10,4 +14,5 @@ urlpatterns = [
     path('account/',views.account_detail,name = 'account_detail'),
     path('upload-avartar/',views.upload_avatar,name='upload_avatar'),
     path('upload_profile',views.update_profile,name='update_profile'),
+    path('.well-known/appspecific/com.chrome.devtools.json', devtools_json),
 ]

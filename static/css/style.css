@@ -12,6 +12,7 @@ body{
     align-items: center;
     padding:8px;
 }
+
 /*nav maenu on the right as a unordered list*/
 nav{
     flex: 1;
@@ -496,7 +497,9 @@ input:focus{
 }
 .cart-page form {
     border: none;
+    max-height: auto;
 }
+
 table{
     width: 100%;
     border-collapse: collapse;
@@ -1048,7 +1051,7 @@ button.btn:hover {
 }
 
 form {
-    max-height: 400px;   /* Giới hạn chiều cao form */
+    max-height: auto;   /* Giới hạn chiều cao form */
     overflow-y: auto;    /* Tự động hiển thị scroll khi nội dung dài */
     padding: 10px;
     border: 1px solid #ccc;  /* cho dễ nhìn */

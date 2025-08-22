@@ -37,11 +37,11 @@
                         </form>
 
                         <div class="scroll-container">
-                            <form id="RegForm" method="POST">
+                            <form id="RegForm" method="POST" action="{% url 'register' %}">
                                 {% csrf_token %}
-                                {% if next_url and next_url != '/favicon.ico' %}
+                                {% comment %} {% if next_url and next_url != '/favicon.ico' %}
                                 <input type="hidden" name="next" value="{{ next_url }}">
-                                {% endif %}
+                                {% endif %} {% endcomment %}
                                 <div class="form-group">
                                     <input type="text" placeholder="Tên đăng nhập" name="username" class="form-control" id="reg_username" required>
                                 </div>
