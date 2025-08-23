@@ -16,13 +16,16 @@
             <tr>
                 <td>
                     <input type="checkbox" name="selected_items" value="{{ item.id }}" 
-                           class="item-check" data-price="{{ item.subtotal }}" checked>
+                           class="item-check" data-price="{{ item.subtotal }}">
                 </td>
                 <td>
                     <div class="cart-info">
                         <img src="{{ item.product.image.url }}">
                         <div>
                             <p>{{ item.product.name }}</p>
+                            {% if item.size %}
+                            <small class="product-size">Size: {{ item.size }}</small><br>
+                            {% endif %}
                             <small>Giá: {{ item.product.price|floatformat:0 }}₫</small><br>
                             <a href="{% url 'remove_from_cart' item.id %}" class="remove-link" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
                         </div>
@@ -140,6 +143,8 @@
     });
 
     updateTotal();
+
+    
 </script>
 
 <style>

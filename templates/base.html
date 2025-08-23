@@ -23,7 +23,7 @@
                     <li><a href="{% url 'home' %}">Trang chủ</a></li>
                     <li><a href="{%url 'product'%}">Sản phẩm</a></li>
                     <li><a href="#">About</a></li>
-                    <li><a href="#">Contact</a></li>
+                    <li><a href="{% url 'order_list' %}">Đơn hàng</a></li>
                     <li>{% if user.is_authenticated %}
                         <div class="user-menu">
                             <span class="user-name">Xin chào, {{ user.username }}</span>

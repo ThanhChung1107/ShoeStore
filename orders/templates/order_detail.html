@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+<style>
+    .order-detail-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .thank-you-section {
+        text-align: center;
+        padding: 40px 0;
+        margin-bottom: 40px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .thank-you-section h1 {
+        font-size: 2.8em;
+        margin-bottom: 15px;
+        font-weight: 300;
+        color: #2c3e50;
+        letter-spacing: 1px;
+    }
+
+    .thank-you-section p {
+        font-size: 1.3em;
+        color: #7f8c8d;
+        font-weight: 300;
+        line-height: 1.6;
+    }
+
+    .order-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 40px;
+        margin-top: 30px;
+    }
+
+    .order-info-card {
+        background: #fff;
+        padding: 30px;
+        border-radius: 2px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-left: 4px solid #2c3e50;
+        margin-bottom: 30px;
+    }
+
+    .order-info-card h2 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 25px;
+        font-weight: 400;
+        font-size: 1.8em;
+        border-bottom: 1px solid #ecf0f1;
+        padding-bottom: 15px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 15px;
+        margin-bottom: 12px;
+    }
+
+    .info-label {
+        color: #7f8c8d;
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.9em;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        color: #2c3e50;
+        font-weight: 400;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 2px;
+        font-size: 0.9em;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-paid {
+        background-color: #27ae60;
+        color: white;
+    }
+
+    .status-unpaid {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .order-items-section {
+        background: #fff;
+        padding: 30px;
+        border-radius: 2px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .order-item {
+        display: grid;
+        grid-template-columns: 80px 1fr auto auto;
+        gap: 25px;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 2px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-details h4 {
+        margin: 0 0 8px 0;
+        color: #2c3e50;
+        font-size: 1.1em;
+        font-weight: 500;
+    }
+
+    .item-price {
+        color: #7f8c8d;
+        font-size: 0.95em;
+    }
+
+    .item-quantity {
+        color: #7f8c8d;
+        text-align: center;
+        font-size: 0.95em;
+    }
+
+    .item-total {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1.1em;
+    }
+
+    .order-summary {
+        background: #fff;
+        padding: 30px;
+        border-radius: 2px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-top: 40px;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 18px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .summary-item.total {
+        font-size: 1.2em;
+        font-weight: 500;
+        color: #2c3e50;
+        padding-top: 15px;
+        border-top: 2px solid #ecf0f1;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 40px;
+        justify-content: center;
+        
+    }
+    .action-buttons a{
+        border: none;
+    }
+    .btn {
+        padding: 14px 32px;
+        text-decoration: none;
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #2c3e50;
+        color: white;
+        border: 1px solid #2c3e50;
+    }
+
+    .btn-primary:hover {
+        background: #34495e;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: #7f8c8d;
+        border: 1px solid #bdc3c7;
+    }
+
+    .btn-secondary:hover {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border-color: #2c3e50;
+    }
+
+    .support-info {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: #f8f9fa;
+        border-radius: 2px;
+    }
+
+    .support-info p {
+        color: #7f8c8d;
+        margin: 5px 0;
+        font-size: 0.95em;
+    }
+
+    .support-info strong {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .empty-order {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+
+    @media (max-width: 968px) {
+        .order-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-item {
+            grid-template-columns: 60px 1fr;
+            gap: 15px;
+            text-align: left;
+        }
+        
+        .item-quantity, .item-total {
+            grid-column: 2;
+            text-align: left;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-detail-container">
+    <!-- Phần cảm ơn -->
+    <div class="thank-you-section">
+        <h1>Cảm ơn bạn đã đặt hàng</h1>
+        <p>Chúng tôi trân trọng sự tin tưởng của bạn. Đơn hàng đã được tiếp nhận và đang được xử lý.</p>
+    </div>
+
+    <div class="order-content">
+        <!-- Cột trái: Thông tin đơn hàng -->
+        <div>
+            <div class="order-info-card">
+                <h2>Thông tin đơn hàng</h2>
+                <div class="info-grid">
+                    <span class="info-label">Mã đơn hàng</span>
+                    <span class="info-value">#{{ order.id }}</span>
+                </div>
+                <div class="info-grid">
+                    <span class="info-label">Trạng thái</span>
+                    <span class="info-value">
+                        <span class="status-badge {% if order.status == 'paid' %}status-paid{% else %}status-unpaid{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </span>
+                </div>
+                <div class="info-grid">
+                    <span class="info-label">Phương thức TT</span>
+                    <span class="info-value">{{ order.get_payment_method_display }}</span>
+                </div>
+                <div class="info-grid">
+                    <span class="info-label">Ngày đặt hàng</span>
+                    <span class="info-value">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-grid">
+                    <span class="info-label">Người nhận</span>
+                    <span class="info-value">{{ order.user.get_full_name|default:order.user.username }}</span>
+                </div>
+            </div>
+
+            <div class="order-info-card">
+                <h2>Địa chỉ giao hàng</h2>
+                <p style="color: #2c3e50; line-height: 1.6; margin: 0;">{{ order.shipping_address }}</p>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tóm tắt đơn hàng -->
+        <div>
+            <div class="order-summary">
+                <h2>Tổng kết đơn hàng</h2>
+                <div class="summary-item">
+                    <span>Tạm tính</span>
+                    <span>{{ order.total_price|floatformat:0|intcomma }}₫</span>
+                </div>
+                <div class="summary-item">
+                    <span>Phí vận chuyển</span>
+                    <span>Miễn phí</span>
+                </div>
+                <div class="summary-item">
+                    <span>Giảm giá</span>
+                    <span>0₫</span>
+                </div>
+                <div class="summary-item total">
+                    <span>Tổng cộng</span>
+                    <span>{{ order.total_price|floatformat:0|intcomma }}₫</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div class="order-items-section">
+        <h2>Danh sách sản phẩm</h2>
+        {% for item in order_items %}
+        <div class="order-item">
+            <div class="item-image">
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+            </div>
+            <div class="item-details">
+                {% if item.size %}
+                <p class="item-size">Size: {{ item.size }}</p>
+                {% endif %}
+                <h4>{{ item.product.name }}</h4>
+                <p class="item-price">{{ item.price|floatformat:0|intcomma }}₫</p>
+            </div>
+            <div class="item-quantity">
+                <span>Số lượng: {{ item.quantity }}</span>
+            </div>
+            <div class="item-total">
+                {{ item.subtotal|floatformat:0|intcomma }}₫
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-order">
+            <p>Không có sản phẩm nào trong đơn hàng này.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Nút hành động -->
+    <div class="action-buttons">
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            Tiếp tục mua sắm
+        </a>
+        <a href="{% url 'product' %}" class="btn btn-secondary">
+            Xem thêm sản phẩm
+        </a>
+    </div>
+
+    <!-- Thông tin hỗ trợ -->
+    <div class="support-info">
+        <p>Mọi thắc mắc về đơn hàng, vui lòng liên hệ:</p>
+        <p><strong>Hotline:</strong> 0942762246 (8:00 - 22:00)</p>
+        <p><strong>Email:</strong> lethanhchung@gmail.com</p>
+    </div>
+</div>
+{% endblock %}

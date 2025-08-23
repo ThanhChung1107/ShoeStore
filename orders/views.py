@@ -47,16 +47,24 @@ def checkout(request):
             # Lưu thông tin sản phẩm đã chọn vào order
             order.selected_items.set(selected_items)
             
-            # Tạo các OrderItem từ các CartItem đã chọn
+            # Tạo các OrderItem từ các CartItem đã chọn - SỬA LẠI Ở ĐÂY
             for cart_item in selected_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    quantity=cart_item.quantity,
-                    price=cart_item.product.price,  # Lưu giá tại thời điểm đặt
-                    subtotal=cart_item.subtotal
-                )
-            
+                try:
+                    order_item_data = {
+                        'order': order,
+                        'product': cart_item.product,
+                        'quantity': cart_item.quantity,
+                        'price': cart_item.product.price,
+                        'size': cart_item.size
+                    }
+                        
+                    order_item = OrderItem(**order_item_data)
+                    order_item.save()  # Phương thức save() sẽ tự tính subtotal
+                    print(f"Đã tạo OrderItem: {order_item.id}")  # Debug
+                    
+                except Exception as e:
+                    print(f"Lỗi khi tạo OrderItem: {e}")  # Debug
+                    messages.error(request, f"Có lỗi xảy ra với sản phẩm {cart_item.product.name}")
             # Xóa session sau khi sử dụng
             if 'selected_items' in request.session:
                 del request.session['selected_items']
@@ -64,13 +72,16 @@ def checkout(request):
             payment_method = form.cleaned_data['payment_method']
             if payment_method == 'cod':
                 messages.success(request, "Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.")
-                return redirect('order_detail', order_id=order.id)  # Chuyển hướng đến trang chi tiết đơn hàng
+                return redirect('order_detail', order_id=order.id)
             elif payment_method == 'banking':
                 return redirect('process_bank_payment', order_id=order.id)
+        else:
+            # Hiển thị lỗi form nếu có
+            messages.error(request, "Vui lòng kiểm tra lại thông tin đơn hàng.")
                 
     else:
         initial_data = {
-            'shipping_address': request.user.address,
+            'shipping_address': request.user.address if hasattr(request.user, 'address') else '',
             'payment_method': 'cod'
         }
         form = OrderForm(initial=initial_data)
@@ -82,3 +93,21 @@ def checkout(request):
         'selected_total': selected_total
     }
     return render(request, 'checkout.html', context)
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order_items = order.order_items.all()
+    order_count = order_items.count()
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'order_count': order_count,
+    }
+    return render(request,'order_detail.html',context)
+
+@login_required
+def order_list(request):
+    """Hiển thị danh sách đơn hàng của người dùng"""
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'order_list.html', {'orders': orders})

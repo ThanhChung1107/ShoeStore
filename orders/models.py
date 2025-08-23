@@ -50,7 +50,8 @@ class OrderItem(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=12, decimal_places=2)  # giá tại thời điểm đặt
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    size = models.CharField(max_length=50, blank=True, null=True)   # giá tại thời điểm đặt
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
 
     def save(self, *args, **kwargs):

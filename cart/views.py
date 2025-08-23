@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from products.models import Product
+from products.models import Product, Size
 from .models import Cart, CartItem
 from django.contrib import messages
 from django.http import JsonResponse
@@ -22,39 +22,71 @@ def cart_detail(request):
 
 def add_to_cart(request, product_id):
     if request.method != "POST":
-        return redirect('/')  # Chỉ cho phép POST
+        return redirect('/')
 
-    # Nếu chưa login
     if not request.user.is_authenticated:
         current_url = request.META.get('HTTP_REFERER') or '/'
         request.session['next_url'] = current_url
         messages.info(request, "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!")
         return redirect('login')
 
-    # Đã login → xử lý logic giỏ hàng
     product = get_object_or_404(Product, id=product_id)
     cart, created = Cart.objects.get_or_create(user=request.user)
 
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        defaults={'quantity': 1}
-    )
+    # LẤY QUANTITY VÀ SIZE TỪ FORM
+    quantity = int(request.POST.get('quantity', 1))
+    size_id = request.POST.get('size')  # Lấy size ID từ radio button
+    
+    # LẤY SIZE OBJECT thay vì chỉ lưu ID
+    selected_size = None
+    if size_id:
+        try:
+            selected_size = Size.objects.get(id=size_id)
+            print(f"DEBUG: Size object: {selected_size} (value: {selected_size.value})")
+        except Size.DoesNotExist:
+            messages.error(request, "Size không hợp lệ!")
+            return redirect(request.META.get('HTTP_REFERER', 'product_detail'))
+    
+    print(f"DEBUG: Quantity from form: {quantity}")
+    print(f"DEBUG: Size ID from form: {size_id}")
+    print(f"DEBUG: Selected size object: {selected_size}")
 
-    if not created:
-        cart_item.quantity += 1
+    # Tìm hoặc tạo cart item với Size object
+    try:
+        cart_item = CartItem.objects.get(
+            cart=cart,
+            product=product,
+            size=selected_size  # Dùng Size object, không phải ID
+        )
+        # Nếu tìm thấy, cộng thêm quantity
+        cart_item.quantity += quantity
         cart_item.save()
+        created = False
+        print(f"DEBUG: Updated existing item, new quantity: {cart_item.quantity}")
+        
+    except CartItem.DoesNotExist:
+        # Nếu không tìm thấy, tạo mới
+        cart_item = CartItem.objects.create(
+            cart=cart,
+            product=product,
+            quantity=quantity,
+            size=selected_size  # Lưu Size object
+        )
+        created = True
+        print(f"DEBUG: Created new item, quantity: {cart_item.quantity}, size: {cart_item.size}")
 
-    # Nếu là AJAX → trả JSON
+    # Response
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        size_text = f" (Size: {selected_size.value})" if selected_size else ""
         return JsonResponse({
             "success": True,
-            "message": f"Đã thêm {product.name} vào giỏ hàng",
-            "cart_count": cart.items.count()
+            "message": f"Đã thêm {quantity} x {product.name}{size_text} vào giỏ hàng",
+            "cart_count": cart.items.count(),
+            "quantity_added": quantity
         })
 
-    # Nếu là request bình thường → redirect và hiện message
-    messages.success(request, f"Đã thêm {product.name} vào giỏ hàng!")
+    size_text = f" (Size: {selected_size.value})" if selected_size else ""
+    messages.success(request, f"Đã thêm {quantity} x {product.name}{size_text} vào giỏ hàng!")
     return redirect(request.META.get('HTTP_REFERER', 'cart_detail'))
 
 @login_required

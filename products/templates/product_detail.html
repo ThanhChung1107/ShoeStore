@@ -117,10 +117,36 @@ for(let i = 0; i < smallImg.length; i++) {
         productImg.src = smallImg[i].src;
     }
 }
+
+// Xử lý chọn size
+document.querySelectorAll('.size-option').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('selected_size').value = this.value;
+    });
+});
+
 document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Kiểm tra xem đã chọn size chưa (nếu có size options)
+    const sizeOptions = document.querySelectorAll('.size-option');
+    if (sizeOptions.length > 0) {
+        const selectedSize = document.querySelector('.size-option:checked');
+        if (!selectedSize) {
+            alert('Vui lòng chọn size!');
+            return;
+        }
+        // Cập nhật hidden field
+        document.getElementById('selected_size').value = selectedSize.value;
+    }
     
     const form = this;
     const formData = new FormData(form);
+    
+    // Debug: kiểm tra dữ liệu gửi đi
+    console.log('Quantity:', formData.get('quantity'));
+    console.log('Size:', formData.get('size'));
+    console.log('Selected Size:', formData.get('selected_size'));
     
     // Thêm header để xác định AJAX request
     const headers = {
@@ -167,7 +193,6 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-
 function updateCartCount(count) {
     // Cập nhật số lượng giỏ hàng trên giao diện
     const cartCountEl = document.querySelector('.cart-count');
@@ -175,6 +200,5 @@ function updateCartCount(count) {
         cartCountEl.textContent = count;
     }
 }
-
 </script>
 {% endblock %}

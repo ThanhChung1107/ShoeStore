@@ -23,7 +23,10 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    
+    size = models.CharField(max_length=50, blank=True, null=True)
+    class Meta:
+        # Đảm bảo mỗi sản phẩm + size chỉ có 1 dòng trong giỏ hàng
+        unique_together = ['cart', 'product', 'size']
     @property
     def subtotal(self):
         return self.product.price * self.quantity

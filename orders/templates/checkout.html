@@ -21,6 +21,9 @@
                     </div>
                     <div class="item-details">
                         <h4>{{ item.product.name }}</h4>
+                        {% if item.size %}
+                        <p class="item-size">Size: {{ item.size }}</p>
+                        {% endif %}
                         <p class="item-price">{{ item.product.price|floatformat:0 }}₫</p>
                     </div>
                     <div class="item-quantity">
@@ -51,18 +54,19 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Phương thức thanh toán *</label>
-                    <div class="payment-methods">
-                        {% for value, label in form.payment_method.field.choices %}
-                        <div class="payment-method">
-                            <input type="radio" name="payment_method" id="payment_{{ value }}" 
-                                   value="{{ value }}" {% if form.payment_method.value == value %}checked{% endif %}>
-                            <label for="payment_{{ value }}">
-                                <i class="fas fa-{% if value == 'cod' %}money-bill-wave{% else %}university{% endif %}"></i>
+                    <label for="id_payment_method">Phương thức thanh toán *</label>
+                    <div class="payment-dropdown">
+                        <select name="payment_method" id="id_payment_method" required>
+                            <option value="">Chọn phương thức thanh toán</option>
+                            {% for value, label in form.payment_method.field.choices %}
+                            <option value="{{ value }}" {% if form.payment_method.value == value %}selected{% endif %}>
                                 {{ label }}
-                            </label>
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="dropdown-icon">
+                            <i class="fas fa-chevron-down"></i>
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
                 
@@ -133,7 +137,15 @@
     max-height: auto;
     overflow-y: auto;
 }
-
+.item-size {
+    color: #666;
+    font-size: 0.9em;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin: 5px 0;
+}
 .checkout-cart-item {
     display: grid;
     grid-template-columns: 80px 1fr auto auto;
@@ -236,47 +248,63 @@
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
-.payment-methods {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
+/* Payment Dropdown Styles */
+.payment-dropdown {
+    position: relative;
+    display: block;
+    width: 100%;
 }
 
-.payment-method {
-    flex: 1;
-    min-width: 200px;
-}
-
-.payment-method input[type="radio"] {
-    display: none;
-}
-
-.payment-method label {
-    display: flex;
-    align-items: center;
-    padding: 15px;
+.payment-dropdown select {
+    width: 100%;
+    padding: 15px 50px 15px 15px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
+    background: white;
+    font-size: 1rem;
+    font-family: inherit;
+    color: #2c3e50;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     transition: all 0.3s ease;
 }
 
-.payment-method label:hover {
+.payment-dropdown select:focus {
+    outline: none;
     border-color: #3498db;
-    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
-.payment-method input[type="radio"]:checked + label {
+.payment-dropdown select:hover {
     border-color: #3498db;
-    background: linear-gradient(135deg, #e8f4fd 0%, #d4e6f1 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
 }
 
-.payment-method label i {
-    margin-right: 10px;
-    font-size: 1.2rem;
+.dropdown-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #6c757d;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.payment-dropdown select:focus + .dropdown-icon {
     color: #3498db;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.payment-dropdown select option {
+    padding: 10px;
+    background: white;
+    color: #2c3e50;
+}
+
+.payment-dropdown select option:hover {
+    background: #f8f9fa;
 }
 
 .order-summary {
@@ -429,14 +457,6 @@
 @media (max-width: 576px) {
     .checkout-container {
         padding: 15px;
-    }
-    
-    .payment-methods {
-        flex-direction: column;
-    }
-    
-    .payment-method {
-        min-width: 100%;
     }
     
     .checkout-cart-item {
