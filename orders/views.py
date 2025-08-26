@@ -74,7 +74,12 @@ def checkout(request):
                 messages.success(request, "Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.")
                 return redirect('order_detail', order_id=order.id)
             elif payment_method == 'banking':
-                return redirect('process_bank_payment', order_id=order.id)
+                # 🟢 CHUYỂN HƯỚNG ĐẾN TRANG THANH TOÁN VNPAY
+                # Lưu order ID vào session
+                request.session['pending_order_id'] = order.id
+                request.session.modified = True
+                
+                return redirect('payment')  # Chuyển hướng đến trang payment của VNPay
         else:
             # Hiển thị lỗi form nếu có
             messages.error(request, "Vui lòng kiểm tra lại thông tin đơn hàng.")

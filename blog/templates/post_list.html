@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+{% load static%}
+    {% block extra_css %}
+    <link href="{% static 'css/blog_style.css' %}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% endblock %}
+
+   {% block content %}
+    <div class="container">
+        <!-- Create Post -->
+        <div class="content-left">
+            <div class="create-post">
+                <div class="create-post-input">
+                    <div class="user-avatar">TN</div>
+                    <textarea class="create-post-textarea" placeholder="Bạn đang nghĩ gì?" readonly onclick="openPostModal()"></textarea>
+                </div>
+                <div class="create-post-actions">
+                    <div class="post-option photo" onclick="openPostModal()">
+                        <i class="fas fa-images"></i>
+                        Ảnh/Video
+                    </div>
+                </div>
+            </div>
+                    <!-- Posts -->
+        <div class="posts-container">
+            <!-- Post 1 -->
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-avatar">NV</div>
+                    <div class="post-author-info">
+                        <h4>Nguyễn Văn An</h4>
+                        <div class="post-time">2 giờ trước</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <div class="post-text">
+                        Vừa mua được đôi Nike Air Max mới! Cảm giác đi rất êm và thiết kế cực kỳ đẹp mắt. 
+                        Ai đang tìm giày chạy bộ tốt thì mình recommend đôi này nhé! 🔥
+                    </div>
+                    <div class="post-image">
+                        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Nike Air Max">
+                    </div>
+                </div>
+                <div class="post-stats">
+                    <div class="like-count" onclick="toggleLike(this.closest('.post').querySelector('.action-btn'))">
+                        <div class="like-icon">❤</div>
+                        <span>24</span>
+                    </div>
+                    <div>8 bình luận</div>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn" onclick="toggleLike(this)">
+                        <i class="far fa-heart"></i>
+                        Thích
+                    </button>
+                    <button class="action-btn" onclick="toggleComments(this)">
+                        <i class="far fa-comment"></i>
+                        Bình luận
+                    </button>
+                    <button class="action-btn">
+                        <i class="far fa-share"></i>
+                        Chia sẻ
+                    </button>
+                </div>
+                <div class="comments-section" style="display: none;">
+                    <div class="comment">
+                        <div class="comment-avatar">TH</div>
+                        <div class="comment-content">
+                            <div class="comment-bubble">
+                                <div class="comment-author">Thu Hương</div>
+                                <div class="comment-text">Đôi này màu gì vậy bạn? Trông rất đẹp!</div>
+                            </div>
+                            <div class="comment-time">1 giờ trước</div>
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <div class="comment-avatar">HL</div>
+                        <div class="comment-content">
+                            <div class="comment-bubble">
+                                <div class="comment-author">Hoàng Long</div>
+                                <div class="comment-text">Giá bao nhiêu vậy anh? Mình cũng đang cần tìm mua.</div>
+                            </div>
+                            <div class="comment-time">45 phút trước</div>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <div class="comment-avatar">TN</div>
+                        <input type="text" class="comment-input" placeholder="Viết bình luận..." onkeypress="handleCommentSubmit(event, this)">
+                        <button class="comment-submit" onclick="submitComment(this)">Gửi</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post 2 -->
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-avatar">LM</div>
+                    <div class="post-author-info">
+                        <h4>Lê Minh Tú</h4>
+                        <div class="post-time">4 giờ trước</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <div class="post-text">
+                        Tips bảo quản giày da để giữ được lâu: <br>
+                        1. Luôn đặt trong túi vải khô ráo<br>
+                        2. Định kỳ đánh xi và bảo dưỡng<br>
+                        3. Tránh để nơi ẩm ướt<br>
+                        Hy vọng hữu ích cho mọi người! 💪
+                    </div>
+                </div>
+                <div class="post-stats">
+                    <div class="like-count" onclick="toggleLike(this.closest('.post').querySelector('.action-btn'))">
+                        <div class="like-icon">❤</div>
+                        <span>18</span>
+                    </div>
+                    <div>5 bình luận</div>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn liked" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i>
+                        Thích
+                    </button>
+                    <button class="action-btn" onclick="toggleComments(this)">
+                        <i class="far fa-comment"></i>
+                        Bình luận
+                    </button>
+                    <button class="action-btn">
+                        <i class="far fa-share"></i>
+                        Chia sẻ
+                    </button>
+                </div>
+                <div class="comments-section" style="display: none;">
+                    <div class="comment">
+                        <div class="comment-avatar">DN</div>
+                        <div class="comment-content">
+                            <div class="comment-bubble">
+                                <div class="comment-author">Đức Nam</div>
+                                <div class="comment-text">Cảm ơn bạn! Mình sẽ áp dụng ngay.</div>
+                            </div>
+                            <div class="comment-time">3 giờ trước</div>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <div class="comment-avatar">TN</div>
+                        <input type="text" class="comment-input" placeholder="Viết bình luận..." onkeypress="handleCommentSubmit(event, this)">
+                        <button class="comment-submit" onclick="submitComment(this)">Gửi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+
+
+        <!-- Phần bên phải - Sản phẩm bán chạy -->
+        <div class="content-right">
+            <div class="best-sellers">
+                <h3 class="section-title">Sản phẩm bán chạy</h3>
+                
+                <div class="product-list">
+                    <!-- Sản phẩm 1 -->
+                    <div class="product-item">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Giày Nike Air Max">
+                            <span class="product-badge">Bán chạy</span>
+                        </div>
+                        <div class="product-info">
+                            <h4 class="product-name">Nike Air Max 270</h4>
+                            <div class="product-price">
+                                <span class="current-price">3.250.000₫</span>
+                                <span class="original-price">3.800.000₫</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="rating-count">(128)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sản phẩm 2 -->
+                    <div class="product-item">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Giày Adidas Ultraboost">
+                            <span class="product-badge">Giảm 15%</span>
+                        </div>
+                        <div class="product-info">
+                            <h4 class="product-name">Adidas Ultraboost 22</h4>
+                            <div class="product-price">
+                                <span class="current-price">3.600.000₫</span>
+                                <span class="original-price">4.200.000₫</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                <span class="rating-count">(96)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sản phẩm 3 -->
+                    <div class="product-item">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Giày Nike Air Force">
+                        </div>
+                        <div class="product-info">
+                            <h4 class="product-name">Nike Air Force 1</h4>
+                            <div class="product-price">
+                                <span class="current-price">2.500.000₫</span>
+                                <span class="original-price">2.800.000₫</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-count">(215)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sản phẩm 4 -->
+                    <div class="product-item">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1605030753481-bb38b08c384a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Giày New Balance">
+                            <span class="product-badge">Mới</span>
+                        </div>
+                        <div class="product-info">
+                            <h4 class="product-name">New Balance 550</h4>
+                            <div class="product-price">
+                                <span class="current-price">2.900.000₫</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                <span class="rating-count">(47)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="view-all-btn">Xem tất cả sản phẩm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Tạo bài viết</div>
+                <button class="close" onclick="closePostModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-user-info">
+                    <div class="user-avatar">TN</div>
+                    <div>
+                        <div style="font-weight: 600;">Tên người dùng</div>
+                        <div style="font-size: 13px; color: #65676b;">Công khai</div>
+                    </div>
+                </div>
+                <textarea class="modal-textarea" placeholder="Bạn đang nghĩ gì?" id="postContent"></textarea>
+                <div class="image-upload" id="imageUpload" onclick="document.getElementById('imageInput').click()">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                    <img class="image-preview" id="imagePreview" alt="Preview">
+                    <button class="remove-image" onclick="removeImage(event)">&times;</button>
+                    <div class="upload-text" id="uploadText">
+                        <i class="fas fa-images" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
+                        Thêm ảnh/video
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-post-modal" id="submitPost" onclick="createPost()" disabled>Đăng</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let postIdCounter = 0;
+
+        // Modal functions
+        function openPostModal() {
+            document.getElementById('postModal').style.display = 'block';
+            document.getElementById('postContent').focus();
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').style.display = 'none';
+            document.getElementById('postContent').value = '';
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('uploadText').style.display = 'block';
+            document.getElementById('imageUpload').classList.remove('has-image');
+            document.getElementById('submitPost').disabled = true;
+        }
+
+        // Image preview functions
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    document.getElementById('uploadText').style.display = 'none';
+                    document.getElementById('imageUpload').classList.add('has-image');
+                    checkSubmitButton();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage(event) {
+            event.stopPropagation();
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('uploadText').style.display = 'block';
+            document.getElementById('imageUpload').classList.remove('has-image');
+            checkSubmitButton();
+        }
+
+        function checkSubmitButton() {
+            const content = document.getElementById('postContent').value.trim();
+            const hasImage = document.getElementById('imagePreview').style.display === 'block';
+            document.getElementById('submitPost').disabled = !content && !hasImage;
+        }
+
+        // Event listeners
+        document.getElementById('postContent').addEventListener('input', checkSubmitButton);
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('postModal');
+            if (event.target == modal) {
+                closePostModal();
+            }
+        }
+
+        // Create post function
+        function createPost() {
+    const content = document.getElementById('postContent').value.trim();
+    const imageFile = document.getElementById('imageInput').files[0];
+    
+    if (!content && !imageFile) return;
+
+    // Show loading
+    const submitBtn = document.getElementById('submitPost');
+    const originalText = submitBtn.textContent;
+    submitBtn.innerHTML = '<div class="loading"></div>';
+    submitBtn.disabled = true;
+
+    // Simulate posting delay
+    setTimeout(() => {
+        const postsContainer = document.querySelector('.posts-container');
+        const newPost = document.createElement('div');
+        newPost.className = 'post';
+        
+        let imageHTML = '';
+        if (imageFile) {
+            const imageURL = URL.createObjectURL(imageFile);
+            imageHTML = `<div class="post-image"><img src="${imageURL}" alt="User uploaded image"></div>`;
+        }
+
+        postIdCounter++;
+        newPost.innerHTML = `
+            <div class="post-header">
+                <div class="post-avatar">TN</div>
+                <div class="post-author-info">
+                    <h4>Tên người dùng</h4>
+                    <div class="post-time">Vừa xong</div>
+                </div>
+            </div>
+            <div class="post-content">
+                ${content ? `<div class="post-text">${content}</div>` : ''}
+                ${imageHTML}
+            </div>
+            <div class="post-stats">
+                <div class="like-count" onclick="toggleLike(this.closest('.post').querySelector('.action-btn'))">
+                    <div class="like-icon">❤</div>
+                    <span>0</span>
+                </div>
+                <div>0 bình luận</div>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn" onclick="toggleLike(this)">
+                    <i class="far fa-heart"></i>
+                    Thích
+                </button>
+                <button class="action-btn" onclick="toggleComments(this)">
+                    <i class="far fa-comment"></i>
+                    Bình luận
+                </button>
+                <button class="action-btn">
+                    <i class="far fa-share"></i>
+                    Chia sẻ
+                </button>
+            </div>
+            <div class="comments-section" style="display: none;">
+                <div class="comment-form">
+                    <div class="comment-avatar">TN</div>
+                    <input type="text" class="comment-input" placeholder="Viết bình luận..." onkeypress="handleCommentSubmit(event, this)">
+                    <button class="comment-submit" onclick="submitComment(this)">Gửi</button>
+                </div>
+            </div>
+        `;
+
+        // Insert new post at the beginning
+        postsContainer.insertBefore(newPost, postsContainer.firstChild);
+        
+        // Reset form and close modal
+        submitBtn.innerHTML = originalText;
+        closePostModal();
+        
+        // Show success message
+        showNotification('Bài viết đã được đăng thành công!');
+    }, 1000);
+} // <-- ĐÂY LÀ DẤU ĐÓNG NGOẶC BỊ THIẾU
+
+// Like functionality
+function toggleLike(button) {
+    const post = button.closest('.post');
+    const likeCountElement = post.querySelector('.like-count span');
+    const likeIcon = button.querySelector('i');
+    
+    let currentLikes = parseInt(likeCountElement.textContent);
+    
+    if (button.classList.contains('liked')) {
+        // Unlike
+        button.classList.remove('liked');
+        likeIcon.className = 'far fa-heart';
+        likeCountElement.textContent = currentLikes - 1;
+    } else {
+        // Like
+        button.classList.add('liked');
+        likeIcon.className = 'fas fa-heart';
+        likeCountElement.textContent = currentLikes + 1;
+        
+        // Like animation
+        button.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 200);
+    }
+}
+
+// Comments functionality
+function toggleComments(button) {
+    const post = button.closest('.post');
+    const commentsSection = post.querySelector('.comments-section');
+    
+    if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-comment"></i> Ẩn bình luận';
+    } else {
+        commentsSection.style.display = 'none';
+        button.innerHTML = '<i class="far fa-comment"></i> Bình luận';
+    }
+}
+
+        // Comment submission
+        function handleCommentSubmit(event, input) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitComment(input.nextElementSibling);
+            }
+        }
+
+        function submitComment(button) {
+            const commentForm = button.closest('.comment-form');
+            const input = commentForm.querySelector('.comment-input');
+            const commentText = input.value.trim();
+            
+            if (!commentText) return;
+            
+            // Create new comment
+            const newComment = document.createElement('div');
+            newComment.className = 'comment';
+            newComment.innerHTML = `
+                <div class="comment-avatar">TN</div>
+                <div class="comment-content">
+                    <div class="comment-bubble">
+                        <div class="comment-author">Tên người dùng</div>
+                        <div class="comment-text">${commentText}</div>
+                    </div>
+                    <div class="comment-time">Vừa xong</div>
+                </div>
+            `;
+            
+            // Insert comment before the form
+            commentForm.parentNode.insertBefore(newComment, commentForm);
+            
+            // Update comment count
+            const post = commentForm.closest('.post');
+            const commentCountElement = post.querySelector('.post-stats div:last-child');
+            const currentCount = parseInt(commentCountElement.textContent.match(/\d+/)[0]) || 0;
+            commentCountElement.textContent = `${currentCount + 1} bình luận`;
+            
+            // Clear input
+            input.value = '';
+            
+            // Show success notification
+            showNotification('Bình luận đã được thêm!');
+        }
+
+        // Utility functions
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #42a5f5;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            // Add animation keyframes if not exist
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-in forwards';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Add auto-resize to modal textarea
+        document.getElementById('postContent').addEventListener('input', function() {
+            autoResize(this);
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Blog Community loaded successfully!');
+            
+            // Add some interactivity to existing posts
+            document.querySelectorAll('.comment-input').forEach(input => {
+                input.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        submitComment(this.nextElementSibling);
+                    }
+                });
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Escape to close modal
+            if (event.key === 'Escape') {
+                if (document.getElementById('postModal').style.display === 'block') {
+                    closePostModal();
+                }
+            }
+            
+            // Ctrl/Cmd + Enter to submit post
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                if (document.getElementById('postModal').style.display === 'block') {
+                    if (!document.getElementById('submitPost').disabled) {
+                        createPost();
+                    }
+                }
+            }
+        });
+
+        // Smooth scrolling for new posts
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Add some sample interactions for demo
+        setTimeout(() => {
+            showNotification('Chào mừng bạn đến với Blog Community! 👋');
+        }, 1000)
+    </script>
+{% endblock %}

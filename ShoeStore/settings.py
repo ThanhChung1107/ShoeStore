@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'categorys',
     'cart',
     'orders',
+    'payments',
+    'blog',
     'brands.apps.BrandsConfig',
 ]
 
@@ -148,3 +150,10 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_SAVE_EVERY_REQUEST = True
+
+# VNPAY CONFIG
+VNPAY_RETURN_URL = 'http://localhost:8000/payment_return'  # get from config
+VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'  # get from config
+VNPAY_API_URL = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
+VNPAY_TMN_CODE = 'YCWWRHWC'  # Website ID in VNPAY System, get from config
+VNPAY_HASH_SECRET_KEY = 'M2SHPUB1NC2KTVTTWEHOF8IVA2527W7V'  # Secret key for create checksum,get from config
