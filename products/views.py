@@ -110,3 +110,4 @@ def product_details(request, product_id):
         'available_sizes': available_sizes,
         'related_products': related_products
     })
+

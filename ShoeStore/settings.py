@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'blog',
     'brands.apps.BrandsConfig',
 ]
-
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'       # sau khi login → trang chủ
 LOGOUT_REDIRECT_URL = '/' 
 AUTH_USER_MODEL = 'users.User'
