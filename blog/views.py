@@ -198,3 +198,78 @@ def post_comment(request, pk):
             'success': False,
             'error': str(e)
         })
+    
+@login_required
+@require_POST
+@csrf_exempt
+def post_comment_reply(request, pk, parent_id):
+    """Trả lời comment"""
+    try:
+        post = get_object_or_404(Post, pk=pk)
+        parent_comment = get_object_or_404(Comment, pk=parent_id, post=post)
+        
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            content = data.get('content', '').strip()
+        else:
+            content = request.POST.get('content', '').strip()
+
+        if not content:
+            return JsonResponse({
+                'success': False,
+                'error': 'Nội dung comment không được để trống'
+            })
+            
+        comment = Comment.objects.create(
+            post=post,
+            user=request.user,
+            parent=parent_comment,
+            content=content
+        )
+
+        return JsonResponse({
+            'success': True,
+            'comment_id': comment.id,
+            'user_name': request.user.username,
+            'user_avatar': request.user.avatar.url if request.user.avatar else '',
+            'content': content,
+            'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+            'parent_id': parent_comment.id,
+            'is_reply': True
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+@login_required
+@require_POST
+@csrf_exempt
+def comment_like(request, pk):
+    """Like/unlike comment"""
+    try:
+        comment = get_object_or_404(Comment, pk=pk)
+        like, created = CommentLike.objects.get_or_create(
+            comment=comment,
+            user=request.user
+        )
+        
+        if not created:
+            like.delete()
+            liked = False
+        else:
+            liked = True
+            
+        return JsonResponse({
+            'success': True,
+            'liked': liked,
+            'total_likes': comment.likes.count()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })

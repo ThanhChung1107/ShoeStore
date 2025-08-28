@@ -80,6 +80,7 @@ class Comment(models.Model):
     content = models.TextField(verbose_name='Nội dung bình luận')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Ngày tạo bình luận')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Ngày cập nhật')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     
     class Meta:
         verbose_name = 'Bình luận'
@@ -91,6 +92,12 @@ class Comment(models.Model):
     
     def total_likes(self):
         return self.likes.count()
+    
+    def is_reply(self):
+        return self.parent is not None
+    
+    def get_replies(self):
+        return self.replies.all().order_by('created_at')
 
 class CommentLike(models.Model):
     """Model cho lượt thích bình luận"""

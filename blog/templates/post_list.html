@@ -82,25 +82,92 @@
                     </button>
                 </div>
                 <div class="comments-section" style="display: none;">
-                    {% for comment in post.comments.all %}
-                    <div class="comment">
-                        <div class="comment-avatar">{{ comment.user.username|slice:":2"|upper }}</div>
+                {% for comment in post.comments.all %}
+                    {% if not comment.parent %}
+                    <div class="comment" data-comment-id="{{ comment.id }}">
+                        {% if comment.user.avatar %}
+                        <div class="post-avatar">
+                            <img src="{{ comment.user.avatar.url }}" alt="{{ comment.user.username }}" style="width:40px; height:40px; border-radius:50%;">
+                        </div>
+                        {% else %}
+                            <div class="comment-avatar">{{ comment.user.username|slice:":2"|upper }}</div>
+                        {% endif %}
                         <div class="comment-content">
                             <div class="comment-bubble">
                                 <div class="comment-author">{{ comment.user.username }}</div>
                                 <div class="comment-text">{{ comment.content }}</div>
+                                <div class="comment-actions">
+                                    <button class="comment-action-btn" onclick="toggleLikeComment({{ comment.id }})">
+                                        <i class="far fa-heart"></i> Like
+                                    </button>
+                                    <button class="comment-action-btn" onclick="toggleReplyForm({{ comment.id }})">
+                                        <i class="far fa-comment"></i> Reply
+                                    </button>
+                                    <span class="comment-likes">{{ comment.total_likes }} likes</span>
+                                </div>
                             </div>
                             <div class="comment-time">{{ comment.created_at|timesince }} trước</div>
+                            
+                            <!-- Reply form (ẩn ban đầu) -->
+                            <div class="reply-form" id="reply-form-{{ comment.id }}" style="display: none;">
+                                {% if current_user.avatar %}
+                                <div class="post-avatar">
+                                    <img src="{{ current_user.avatar.url }}" alt="{{ current_user.username }}" style="width:40px; height:40px; border-radius:50%;">
+                                </div>
+                                {% else %}
+                                    <div class="comment-avatar">{{ current_user.username|slice:":2"|upper }}</div>
+                                {% endif %}
+                                <input type="text" class="comment-input" placeholder="Viết phản hồi..." 
+                                    onkeypress="handleReplySubmit(event, this, {{ post.id }}, {{ comment.id }})">
+                                <button class="comment-submit" onclick="submitReply(this, {{ post.id }}, {{ comment.id }})">Gửi</button>
+                            </div>
+                            
+                            <!-- Hiển thị replies -->
+                            <div class="comment-replies">
+                                {% for reply in comment.replies.all %}
+                                <div class="comment reply">
+                                    {% if comment.user.avatar %}
+                                <div class="post-avatar">
+                                    <img src="{{ comment.user.avatar.url }}" alt="{{ comment.user.username }}" style="width:40px; height:40px; border-radius:50%;">
+                                </div>
+                                {% else %}
+                                    <div class="comment-avatar">{{ comment.user.username|slice:":2"|upper }}</div>
+                                {% endif %}
+                                    <div class="comment-content">
+                                        <div class="comment-bubble">
+                                            <div class="comment-author">{{ reply.user.username }}</div>
+                                            <div class="comment-text">{{ reply.content }}</div>
+                                            <div class="comment-actions">
+                                                <button class="comment-action-btn" onclick="toggleLikeComment({{ reply.id }})">
+                                                    <i class="far fa-heart"></i> Like
+                                                </button>
+                                                <span class="comment-likes">{{ reply.total_likes }} likes</span>
+                                            </div>
+                                        </div>
+                                        <div class="comment-time">{{ reply.created_at|timesince }} trước</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
-                    {% endfor %}
-                    <div class="comment-form">
-                        <div class="comment-avatar">{{ request.user.username|slice:":2"|upper }}</div>
-                        <input type="text" class="comment-input" placeholder="Viết bình luận..." 
-                            onkeypress="handleCommentSubmit(event, this, {{ post.id }})">
-                        <button class="comment-submit" onclick="submitComment(this, {{ post.id }})">Gửi</button>
+                    {% endif %}
+                {% endfor %}
+                
+                <!-- Form comment chính -->
+                <div class="comment-form">
+                    {% if current_user.avatar %}
+                    <div class="post-avatar">
+                        <img src="{{ current_user.avatar.url }}" alt="{{ current_user.username }}" style="width:40px; height:40px; border-radius:50%;">
                     </div>
+                    {% else %}
+                        <div class="comment-avatar">{{ current_user.username|slice:":2"|upper }}</div>
+                    {% endif %}
+                    <input type="text" class="comment-input" placeholder="Viết bình luận..." 
+                        onkeypress="handleCommentSubmit(event, this, {{ post.id }})">
+                    <button class="comment-submit" onclick="submitComment(this, {{ post.id }})">Gửi</button>
                 </div>
+            </div>
             </div>
             {% empty %}
             <div class="no-posts">
@@ -665,5 +732,123 @@ function isUserLoggedIn() {
         setTimeout(() => {
             showNotification('Chào mừng bạn đến với Blog Community! 👋');
         }, 1000)
+// Toggle reply form
+function toggleReplyForm(commentId) {
+    if (!isUserLoggedIn()) {
+        alert('Vui lòng đăng nhập để phản hồi');
+        return;
+    }
+    
+    const replyForm = document.getElementById(`reply-form-${commentId}`);
+    replyForm.style.display = replyForm.style.display === 'none' ? 'flex' : 'none';
+}
+
+// Gửi reply
+function submitReply(button, postId, parentCommentId) {
+    const input = button.previousElementSibling;
+    const replyText = input.value.trim();
+    
+    if (!replyText) {
+        alert('Vui lòng nhập nội dung phản hồi');
+        return;
+    }
+    
+    button.disabled = true;
+    button.textContent = 'Đang gửi...';
+    
+    fetch(`/blog/post/${postId}/comment/${parentCommentId}/reply/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: replyText
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        button.disabled = false;
+        button.textContent = 'Gửi';
+        
+        if (data.success) {
+            // Thêm reply vào DOM
+            const commentElement = document.querySelector(`[data-comment-id="${parentCommentId}"]`);
+            const repliesContainer = commentElement.querySelector('.comment-replies');
+            
+            const newReply = document.createElement('div');
+            newReply.className = 'comment reply';
+            newReply.innerHTML = `
+                <div class="comment-avatar">${data.user_avatar || data.user_name.slice(0, 2).toUpperCase()}</div>
+                <div class="comment-content">
+                    <div class="comment-bubble">
+                        <div class="comment-author">${data.user_name}</div>
+                        <div class="comment-text">${data.content}</div>
+                        <div class="comment-actions">
+                            <button class="comment-action-btn" onclick="toggleLikeComment(${data.comment_id})">
+                                <i class="far fa-heart"></i> Like
+                            </button>
+                            <span class="comment-likes">0 likes</span>
+                        </div>
+                    </div>
+                    <div class="comment-time">${data.created_at}</div>
+                </div>
+            `;
+            
+            repliesContainer.appendChild(newReply);
+            input.value = '';
+            document.getElementById(`reply-form-${parentCommentId}`).style.display = 'none';
+            
+        } else {
+            alert('Lỗi: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.disabled = false;
+        button.textContent = 'Gửi';
+        alert('Có lỗi xảy ra khi gửi phản hồi');
+    });
+}
+
+// Like comment
+function toggleLikeComment(commentId) {
+    if (!isUserLoggedIn()) {
+        alert('Vui lòng đăng nhập để thích bình luận');
+        return;
+    }
+    
+    fetch(`/blog/comment/${commentId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cập nhật số like
+            const likesElement = document.querySelector(`[data-comment-id="${commentId}"] .comment-likes`) || 
+                                document.querySelector(`.comment[data-comment-id="${commentId}"] .comment-likes`);
+            if (likesElement) {
+                likesElement.textContent = `${data.total_likes} likes`;
+            }
+        } else {
+            alert('Lỗi: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Xử lý submit reply bằng Enter
+function handleReplySubmit(event, input, postId, parentCommentId) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        submitReply(input.nextElementSibling, postId, parentCommentId);
+    }
+}
     </script>
 {% endblock %}
