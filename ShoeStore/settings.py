@@ -46,7 +46,31 @@ INSTALLED_APPS = [
     'payments',
     'blog',
     'brands.apps.BrandsConfig',
+    'channels',
 ]
+
+# Channel layers cho Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # 1 là DB index, có thể đổi thành 0,2,...
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# ASGI application
+ASGI_APPLICATION = 'ShoeStore.asgi.application'
+
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'       # sau khi login → trang chủ
 LOGOUT_REDIRECT_URL = '/' 

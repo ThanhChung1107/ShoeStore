@@ -88,13 +88,15 @@ def post_detail(request,pk):
         'user_comment_likes': user_comment_likes
     })
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 @login_required
 @require_POST
-@csrf_exempt  # Tạm thời vô hiệu hóa CSRF để test, sau này nên xử lý đúng cách
+@csrf_exempt
 def post_create_ajax(request):
     """Tạo bài viết mới qua AJAX"""
     try:
-        # Lấy dữ liệu từ AJAX request
         content = request.POST.get('content', '').strip()
         image = request.FILES.get('image')
         
@@ -113,15 +115,26 @@ def post_create_ajax(request):
         )
         post.save()
         
-        # Trả về response JSON
+        # GỬI THÔNG BÁO REALTIME TỚI TẤT CẢ USERS
+        channel_layer = get_channel_layer()
+        
+        # Gửi thông báo đến tất cả users (trừ author)
+        async_to_sync(channel_layer.group_send)(
+            "all_users",  # Group chung cho tất cả users
+            {
+                "type": "new_post_notification",
+                "post_id": post.id,
+                "author_name": request.user.username,
+                "content": content[:100] + "..." if len(content) > 100 else content,
+                "created_at": post.created_at.strftime('%d/%m/%Y %H:%M')
+            }
+        )
+        
         return JsonResponse({
             'success': True,
             'message': 'Bài viết đã được đăng thành công!',
             'post_id': post.id,
-            'post_content': post.content,
-            'post_image_url': post.image.url if post.image else None,
-            'author_name': post.author.username,
-            'created_at': post.created_at.strftime('%d/%m/%Y %H:%M')
+            # ... other data
         })
         
     except Exception as e:
