@@ -14,6 +14,7 @@ from orders.models import Order
 from payments.forms import PaymentForm
 from payments.vnpay import vnpay
 from django.utils import timezone
+from cart.models import Cart
 
 
 def index(request):
@@ -89,7 +90,7 @@ def payment(request):
                 order = Order.objects.get(id=pending_order_id, user=request.user)
                 initial_data = {
                     'order_id': order.id,
-                    'amount': order.total_price,
+                    'amount': float(order.total_price),
                     'order_desc': f'Thanh toán đơn hàng #{order.id} từ RedStore',
                     'order_type': 'other',
                     'language': 'vn'
@@ -168,7 +169,7 @@ def payment_return(request):
             if vnp_ResponseCode == "00":
                 # 🟢 CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG THÀNH "ĐÃ THANH TOÁN"
                 try:
-                    order = Order.objects.get(id=order_id)
+                    order = Order.objects.get(id=int(order_id))
                     order.status = 'paid'
                     order.payment_date = timezone.now()
                     order.transaction_id = vnp_TransactionNo
@@ -186,7 +187,7 @@ def payment_return(request):
                     order.save()
                     
                     # Hiển thị trang thành công
-                    return render(request, "payment_return.html", {
+                    return render(request, "payment/payment_return.html", {
                         "title": "Kết quả thanh toán",
                         "result": "Thành công", 
                         "order_id": order_id,
@@ -197,13 +198,13 @@ def payment_return(request):
                     })
                     
                 except Order.DoesNotExist:
-                    return render(request, "payment_return.html", {
+                    return render(request, "payment/payment_return.html", {
                         "title": "Kết quả thanh toán",
                         "result": "Lỗi", 
                         "message": "Đơn hàng không tồn tại"
                     })
             else:
-                return render(request, "payment_return.html", {
+                return render(request, "payment/payment_return.html", {
                     "title": "Kết quả thanh toán",
                     "result": "Lỗi", 
                     "order_id": order_id,
@@ -213,7 +214,7 @@ def payment_return(request):
                     "vnp_ResponseCode": vnp_ResponseCode
                 })
         else:
-            return render(request, "payment_return.html", {
+            return render(request, "payment/payment_return.html", {
                 "title": "Kết quả thanh toán", 
                 "result": "Lỗi", 
                 "order_id": order_id, 
@@ -224,7 +225,7 @@ def payment_return(request):
                 "msg": "Sai checksum"
             })
     else:
-        return render(request, "payment_return.html", {
+        return render(request, "payment/payment_return.html", {
             "title": "Kết quả thanh toán", 
             "result": ""
         })
@@ -238,7 +239,7 @@ while len(n_str) < 12:
 
 def query(request):
     if request.method == 'GET':
-        return render(request, "query.html", {"title": "Kiểm tra kết quả giao dịch"})
+        return render(request, "payment/query.html", {"title": "Kiểm tra kết quả giao dịch"})
 
     url = settings.VNPAY_API_URL
     secret_key = settings.VNPAY_HASH_SECRET_KEY
@@ -283,7 +284,7 @@ def query(request):
     else:
         response_json = {"error": f"Request failed with status code: {response.status_code}"}
 
-    return render(request, "query.html", {
+    return render(request, "payment/query.html", {
         "title": "Kiểm tra kết quả giao dịch", 
         "response_json": response_json
     })
@@ -291,7 +292,7 @@ def query(request):
 
 def refund(request):
     if request.method == 'GET':
-        return render(request, "refund.html", {"title": "Hoàn tiền giao dịch"})
+        return render(request, "payment/refund.html", {"title": "Hoàn tiền giao dịch"})
 
     url = settings.VNPAY_API_URL
     secret_key = settings.VNPAY_HASH_SECRET_KEY
@@ -343,7 +344,7 @@ def refund(request):
     else:
         response_json = {"error": f"Request failed with status code: {response.status_code}"}
 
-    return render(request, "refund.html", {
+    return render(request, "payment/refund.html", {
         "title": "Kết quả hoàn tiền giao dịch", 
         "response_json": response_json
     })
@@ -354,67 +355,99 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import uuid
 
+# payments/views.py - FIXED create_payment_from_checkout
+
 @login_required
 def create_payment_from_checkout(request):
-    """Xử lý thanh toán từ trang checkout"""
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
         shipping_address = request.POST.get('shipping_address')
         amount = request.POST.get('amount', 0)
-        
+
         if not payment_method or not amount:
             messages.error(request, 'Thông tin thanh toán không hợp lệ!')
             return redirect('checkout')
-        
+
         try:
             amount = float(amount)
         except ValueError:
             messages.error(request, 'Số tiền không hợp lệ!')
             return redirect('checkout')
-        
-        # Tạo order ID unique
-        order_id = f"ORDER_{uuid.uuid4().hex[:8].upper()}"
-        
+
+        # 🟢 TẠO ĐƠN HÀNG ĐÚNG VỚI MODEL
+        try:
+            # Lấy cart hiện tại của user
+            cart = Cart.objects.get(user=request.user)
+            
+            # Tạo order với các field có trong model
+            order = Order.objects.create(
+                user=request.user,
+                cart=cart,  # 🟢 Required field
+                shipping_address=shipping_address,
+                payment_method='banking' if payment_method == 'vnpay' else 'cod',  # 🟢 Đúng choices
+                status='unpaid'  # 🟢 Default status
+            )
+            
+            # 🟢 THÊM SELECTED_ITEMS từ session hoặc cart
+            selected_items_ids = request.session.get('selected_items', [])
+            if selected_items_ids:
+                # Lấy các items đã chọn
+                selected_items = cart.items.filter(id__in=selected_items_ids)
+                order.selected_items.set(selected_items)
+            else:
+                # Nếu không có selection, lấy tất cả items trong cart
+                order.selected_items.set(cart.items.all())
+            
+            print(f"✅ Created Order ID: {order.id}, Total: {order.total_price}")
+            
+        except Cart.DoesNotExist:
+            messages.error(request, 'Giỏ hàng không tồn tại!')
+            return redirect('checkout')
+        except Exception as e:
+            messages.error(request, f'Lỗi tạo đơn hàng: {str(e)}')
+            return redirect('checkout')
+
         if payment_method == 'vnpay':
-            # Tạo VNPay payment
             vnp = vnpay()
             vnp.requestData['vnp_Version'] = '2.1.0'
             vnp.requestData['vnp_Command'] = 'pay'
             vnp.requestData['vnp_TmnCode'] = settings.VNPAY_TMN_CODE
-            vnp.requestData['vnp_Amount'] = int(amount * 100)  # VNPay yêu cầu *100
+            vnp.requestData['vnp_Amount'] = int(float(order.total_price) * 100)  # 🟢 Dùng total_price
             vnp.requestData['vnp_CurrCode'] = 'VND'
-            vnp.requestData['vnp_TxnRef'] = order_id
-            vnp.requestData['vnp_OrderInfo'] = f'Thanh toan don hang {order_id}'
+            vnp.requestData['vnp_TxnRef'] = str(order.id)   # 🟢 Dùng id thật
+            vnp.requestData['vnp_OrderInfo'] = f'Thanh toán đơn hàng #{order.id} RedStore'
             vnp.requestData['vnp_OrderType'] = 'other'
             vnp.requestData['vnp_Locale'] = 'vn'
             vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')
             vnp.requestData['vnp_IpAddr'] = get_client_ip(request)
             vnp.requestData['vnp_ReturnUrl'] = settings.VNPAY_RETURN_URL
-            
-            # Lưu thông tin vào session để sử dụng sau
-            request.session['payment_info'] = {
-                'order_id': order_id,
-                'amount': amount,
-                'shipping_address': shipping_address,
-                'user_id': request.user.id
-            }
-            
-            payment_url = vnp.get_payment_url(settings.VNPAY_PAYMENT_URL, settings.VNPAY_HASH_SECRET_KEY)
-            return redirect(payment_url)
-            
-        elif payment_method == 'cod':
-            # Xử lý COD - tạo đơn hàng trực tiếp
-            messages.success(request, 'Đặt hàng COD thành công!')
-            return redirect('payment_success')
-    
-    return redirect('checkout')
 
+            # Lưu ID order vào session để dùng sau
+            request.session['pending_order_id'] = order.id
+
+            try:
+                payment_url = vnp.get_payment_url(settings.VNPAY_PAYMENT_URL, settings.VNPAY_HASH_SECRET_KEY)
+                return redirect(payment_url)
+            except Exception as e:
+                # Nếu lỗi tạo URL, xóa order
+                order.delete()
+                messages.error(request, f'Lỗi tạo URL thanh toán: {str(e)}')
+                return redirect('checkout')
+
+        elif payment_method == 'cod':
+            # COD không cần VNPay
+            order.payment_method = 'cod'
+            order.save()
+            messages.success(request, f'Đặt hàng COD thành công! Mã đơn hàng: #{order.id}')
+            return redirect('payments:payment_success')
+
+    return redirect('checkout')
 
 def payment_success_page(request):
     """Trang thành công"""
-    return render(request, 'payments/payment_success.html')
+    return render(request, 'payment/payment_success.html')
 
 
 def payment_failed_page(request):
     """Trang thất bại"""
-    return render(request, 'payments/payment_failed.html')
+    return render(request, 'payment/payment_failed.html')

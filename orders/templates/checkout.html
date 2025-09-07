@@ -45,8 +45,12 @@
         <!-- Phần form thanh toán -->
         <div class="checkout-form">
             <h2>Thông tin giao hàng</h2>
-            <form method="post">
+            <!-- 🟢 THÊM ACTION URL VÀO FORM -->
+            <form method="post" action="{% url 'create_payment_from_checkout' %}">
                 {% csrf_token %}
+                
+                <!-- 🟢 THÊM HIDDEN FIELD CHO AMOUNT -->
+                <input type="hidden" name="amount" value="{{ selected_total }}">
                 
                 <div class="form-group">
                     <label for="id_shipping_address">Địa chỉ giao hàng *</label>
@@ -58,11 +62,8 @@
                     <div class="payment-dropdown">
                         <select name="payment_method" id="id_payment_method" required>
                             <option value="">Chọn phương thức thanh toán</option>
-                            {% for value, label in form.payment_method.field.choices %}
-                            <option value="{{ value }}" {% if form.payment_method.value == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
+                            <option value="vnpay">VNPay (Thanh toán online)</option>
+                            <option value="cod">COD (Thanh toán khi nhận hàng)</option>
                         </select>
                         <div class="dropdown-icon">
                             <i class="fas fa-chevron-down"></i>
@@ -94,6 +95,22 @@
         </div>
     </div>
 </div>
+
+<!-- 🟢 THÊM JAVASCRIPT ĐỂ XỬ LÝ PAYMENT METHOD -->
+<script>
+document.getElementById('id_payment_method').addEventListener('change', function() {
+    const paymentMethod = this.value;
+    const submitBtn = document.querySelector('.btn-checkout');
+    
+    if (paymentMethod === 'vnpay') {
+        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Thanh toán VNPay';
+    } else if (paymentMethod === 'cod') {
+        submitBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Đặt hàng COD';
+    } else {
+        submitBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Đặt hàng';
+    }
+});
+</script>
 
 <style>
 .checkout-container {

@@ -1,20 +1,166 @@
-{% extends "payment/base_layout.html" %}
-{% block content %}
-    <div class="panel panel-default">
-        <div class="panel-heading">{{ title }}: {{ result }}</div>
-        <div class="panel-body">
-            <p>order_id:{{ order_id }}</p>
-            <p>amount:{{ amount }}</p>
-            <p>order_desc:{{ order_desc }}</p>
-            <p>vnp_TransactionNo:{{ vnp_TransactionNo }}</p>
-            {% if vnp_ResponseCode == '00' %}
-                <p>vnp_ResponseCode: {{ vnp_ResponseCode }} - Thành công</p>
-            {% else %}
-                <p>vnp_ResponseCode: {{ vnp_ResponseCode }} - Lỗi</p>
-            {% endif %}
-            {% if msg %}
-                <p class="alert-warning"> {{ msg }}</p>
+<!-- templates/payment_return.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .result-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        .info-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        .info-table th, .info-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .info-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h1>{{ title }}</h1>
+        
+        {% if result == "Thành công" %}
+            <div class="success">
+                <h2>✅ Thanh toán thành công!</h2>
+                <p>Cảm ơn bạn đã thanh toán. Đơn hàng của bạn đã được xử lý thành công.</p>
+                
+                <table class="info-table">
+                    <tr>
+                        <th>Mã đơn hàng:</th>
+                        <td>#{{ order_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Số tiền:</th>
+                        <td>{{ amount|floatformat:0 }}₫</td>
+                    </tr>
+                    <tr>
+                        <th>Mã giao dịch VNPay:</th>
+                        <td>{{ vnp_TransactionNo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Mô tả:</th>
+                        <td>{{ order_desc }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+        {% elif result == "Lỗi" or result == "Thất bại" %}
+            <div class="error">
+                <h2>❌ {{ result }}!</h2>
+                {% if message %}
+                    <p><strong>{{ message }}</strong></p>
+                {% else %}
+                    <p>Giao dịch không thành công. Vui lòng thử lại hoặc liên hệ hỗ trợ.</p>
+                {% endif %}
+                
+                {% if order_id or vnp_ResponseCode %}
+                <table class="info-table">
+                    {% if order_id %}
+                    <tr>
+                        <th>Mã đơn hàng:</th>
+                        <td>#{{ order_id }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if vnp_ResponseCode %}
+                    <tr>
+                        <th>Mã lỗi:</th>
+                        <td>{{ vnp_ResponseCode }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if vnp_TransactionNo %}
+                    <tr>
+                        <th>Mã giao dịch:</th>
+                        <td>{{ vnp_TransactionNo }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if error_message %}
+                    <tr>
+                        <th>Chi tiết lỗi:</th>
+                        <td>{{ error_message }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+                {% endif %}
+            </div>
+            
+        {% else %}
+            <div class="warning">
+                <h2>⚠️ Không có thông tin thanh toán</h2>
+                <p>Không nhận được dữ liệu từ cổng thanh toán.</p>
+            </div>
+        {% endif %}
+        
+        <div class="actions">
+            <a href="/" class="btn btn-success">Về trang chủ</a>
+            <a href="/orders/" class="btn">Xem đơn hàng</a>
+            {% if result == "Lỗi" or result == "Thất bại" %}
+            <a href="/checkout/" class="btn">Thử lại</a>
             {% endif %}
         </div>
+        
+        <!-- Debug info (chỉ hiển thị trong development) -->
+        {% if debug %}
+        <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 5px; text-align: left;">
+            <h4>Debug Information:</h4>
+            <small>
+                <strong>Result:</strong> {{ result|default:"None" }}<br>
+                <strong>Order ID:</strong> {{ order_id|default:"None" }}<br>
+                <strong>Amount:</strong> {{ amount|default:"None" }}<br>
+                <strong>Response Code:</strong> {{ vnp_ResponseCode|default:"None" }}<br>
+                <strong>Transaction No:</strong> {{ vnp_TransactionNo|default:"None" }}<br>
+                <strong>Message:</strong> {{ message|default:"None" }}<br>
+            </small>
+        </div>
+        {% endif %}
     </div>
-{% endblock %}
+</body>
+</html>

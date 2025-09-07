@@ -1,0 +1,284 @@
+<!-- templates/payments/payment_success.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán thành công - RedStore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .success-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: checkmark 0.6s ease-in-out;
+        }
+        
+        .success-icon i {
+            color: white;
+            font-size: 40px;
+        }
+        
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .success-title {
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .success-message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .order-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #dee2e6;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+        }
+        
+        .confetti {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: #4CAF50;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(500px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .success-container {
+                padding: 30px 20px;
+            }
+            
+            .success-title {
+                font-size: 24px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <!-- Confetti effects -->
+        <div class="confetti" style="left: 20%; animation-delay: 0s; background: #4CAF50;"></div>
+        <div class="confetti" style="left: 30%; animation-delay: 0.5s; background: #2196F3;"></div>
+        <div class="confetti" style="left: 40%; animation-delay: 1s; background: #FF9800;"></div>
+        <div class="confetti" style="left: 60%; animation-delay: 1.5s; background: #E91E63;"></div>
+        <div class="confetti" style="left: 70%; animation-delay: 2s; background: #9C27B0;"></div>
+        <div class="confetti" style="left: 80%; animation-delay: 2.5s; background: #FF5722;"></div>
+        
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1 class="success-title">Thanh toán thành công!</h1>
+        <p class="success-message">
+            Cảm ơn bạn đã mua sắm tại RedStore. Đơn hàng của bạn đã được xử lý thành công và sẽ được giao trong thời gian sớm nhất.
+        </p>
+        
+        <div class="order-details">
+            <div class="detail-row">
+                <span class="detail-label">
+                    <i class="fas fa-receipt"></i> Mã đơn hàng:
+                </span>
+                <span class="detail-value">#{{ order_id|default:"ORD001" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">
+                    <i class="fas fa-calendar-alt"></i> Ngày đặt:
+                </span>
+                <span class="detail-value">{{ order_date|default:"Hôm nay" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">
+                    <i class="fas fa-credit-card"></i> Phương thức:
+                </span>
+                <span class="detail-value">{{ payment_method|default:"VNPay" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">
+                    <i class="fas fa-dollar-sign"></i> Tổng tiền:
+                </span>
+                <span class="detail-value">{{ amount|default:"2,000,000"|floatformat:0 }}₫</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-home"></i>
+                Về trang chủ
+            </a>
+            <a href="/orders/" class="btn btn-secondary">
+                <i class="fas fa-list"></i>
+                Xem đơn hàng
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Auto redirect after 10 seconds
+        setTimeout(() => {
+            // window.location.href = '/';
+        }, 10000);
+        
+        // Add some interactive effects
+        document.querySelector('.success-icon').addEventListener('click', function() {
+            this.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+    </script>
+</body>
+</html>
