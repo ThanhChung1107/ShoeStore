@@ -29,8 +29,8 @@ class Order(models.Model):
     selected_items = models.ManyToManyField('cart.CartItem')
     @property
     def total_price(self):
-        # Chỉ tính tổng các sản phẩm đã chọn
-        return sum(item.subtotal for item in self.selected_items.all())
+        # Sử dụng OrderItem để tính tổng thay vì CartItem
+        return sum(item.subtotal for item in self.order_items.all())
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
 

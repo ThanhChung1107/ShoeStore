@@ -45,12 +45,25 @@
         <!-- Phần form thanh toán -->
         <div class="checkout-form">
             <h2>Thông tin giao hàng</h2>
-            <!-- 🟢 THÊM ACTION URL VÀO FORM -->
-            <form method="post" action="{% url 'create_payment_from_checkout' %}">
+            
+            <!-- 🟢 FORM COD (ẨN) -->
+            <form method="post" action="{% url 'checkout' %}" id="cod-form" style="display: none;">
                 {% csrf_token %}
-                
-                <!-- 🟢 THÊM HIDDEN FIELD CHO AMOUNT -->
+                <input type="hidden" name="shipping_address" id="cod_shipping_address">
+                <input type="hidden" name="payment_method" value="cod">
+            </form>
+            
+            <!-- 🟢 FORM VNPAY (ẨN) -->
+            <form method="post" action="{% url 'create_payment_from_checkout' %}" id="vnpay-form" style="display: none;">
+                {% csrf_token %}
+                <input type="hidden" name="shipping_address" id="vnpay_shipping_address">
+                <input type="hidden" name="payment_method" value="banking">
                 <input type="hidden" name="amount" value="{{ selected_total }}">
+            </form>
+            
+            <!-- 🟢 FORM HIỂN THỊ CHO USER -->
+            <form id="display-form">
+                {% csrf_token %}
                 
                 <div class="form-group">
                     <label for="id_shipping_address">Địa chỉ giao hàng *</label>
@@ -62,12 +75,9 @@
                     <div class="payment-dropdown">
                         <select name="payment_method" id="id_payment_method" required>
                             <option value="">Chọn phương thức thanh toán</option>
-                            <option value="vnpay">VNPay (Thanh toán online)</option>
+                            <option value="banking">VNPay (Thanh toán online)</option>
                             <option value="cod">COD (Thanh toán khi nhận hàng)</option>
                         </select>
-                        <div class="dropdown-icon">
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
                     </div>
                 </div>
                 
@@ -87,7 +97,7 @@
                     <a href="{% url 'cart_detail' %}" class="btn-back">
                         <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
                     </a>
-                    <button type="submit" class="btn-checkout">
+                    <button type="button" id="submit-btn" class="btn-checkout">
                         <i class="fas fa-shopping-cart"></i> Đặt hàng
                     </button>
                 </div>
@@ -96,19 +106,94 @@
     </div>
 </div>
 
-<!-- 🟢 THÊM JAVASCRIPT ĐỂ XỬ LÝ PAYMENT METHOD -->
+<!-- 🟢 JAVASCRIPT ĐÚNG -->
 <script>
-document.getElementById('id_payment_method').addEventListener('change', function() {
-    const paymentMethod = this.value;
-    const submitBtn = document.querySelector('.btn-checkout');
+document.addEventListener('DOMContentLoaded', function() {
+    const displayForm = document.getElementById('display-form');
+    const codForm = document.getElementById('cod-form');
+    const vnpayForm = document.getElementById('vnpay-form');
+    const paymentMethodSelect = document.getElementById('id_payment_method');
+    const submitBtn = document.getElementById('submit-btn');
+    const shippingAddressInput = document.getElementById('id_shipping_address');
     
-    if (paymentMethod === 'vnpay') {
-        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Thanh toán VNPay';
-    } else if (paymentMethod === 'cod') {
-        submitBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Đặt hàng COD';
-    } else {
-        submitBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Đặt hàng';
+    console.log('🔍 Page loaded, elements found:', {
+        displayForm: !!displayForm,
+        codForm: !!codForm,
+        vnpayForm: !!vnpayForm,
+        paymentMethodSelect: !!paymentMethodSelect,
+        submitBtn: !!submitBtn,
+        shippingAddressInput: !!shippingAddressInput
+    });
+    
+    // Cập nhật text nút khi thay đổi phương thức
+    paymentMethodSelect.addEventListener('change', function() {
+        console.log('🔍 Payment method changed to:', this.value);
+        updateButtonText();
+    });
+    
+    // Xử lý khi click nút submit
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('🔍 Submit button clicked');
+        
+        const paymentMethod = paymentMethodSelect.value;
+        const shippingAddress = shippingAddressInput.value.trim();
+        
+        console.log('🔍 Payment method:', paymentMethod);
+        console.log('🔍 Shipping address:', shippingAddress);
+        
+        // Validate
+        if (!paymentMethod) {
+            alert('Vui lòng chọn phương thức thanh toán!');
+            return;
+        }
+        
+        if (!shippingAddress) {
+            alert('Vui lòng nhập địa chỉ giao hàng!');
+            return;
+        }
+        
+        // Submit form tương ứng
+        if (paymentMethod === 'banking') {
+            console.log('🎯 Submitting VNPay form...');
+            console.log('🎯 VNPay form action:', vnpayForm.action);
+            document.getElementById('vnpay_shipping_address').value = shippingAddress;
+            
+            // 🟢 THÊM DELAY ĐỂ THẤY LOGS
+            setTimeout(() => {
+                console.log('🚀 VNPay form submitting now...');
+                vnpayForm.submit();
+            }, 500);
+            
+        } else if (paymentMethod === 'cod') {
+            console.log('🎯 Submitting COD form...');
+            console.log('🎯 COD form action:', codForm.action);
+            document.getElementById('cod_shipping_address').value = shippingAddress;
+            
+            setTimeout(() => {
+                console.log('🚀 COD form submitting now...');
+                codForm.submit();
+            }, 500);
+        }
+    });
+    
+    function updateButtonText() {
+        const paymentMethod = paymentMethodSelect.value;
+        
+        if (paymentMethod === 'banking') {
+            submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Thanh toán VNPay';
+            submitBtn.style.backgroundColor = '#007bff';
+        } else if (paymentMethod === 'cod') {
+            submitBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Đặt hàng COD';
+            submitBtn.style.backgroundColor = '#28a745';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Đặt hàng';
+            submitBtn.style.backgroundColor = '';
+        }
     }
+    
+    // Cập nhật text nút ban đầu
+    updateButtonText();
 });
 </script>
 

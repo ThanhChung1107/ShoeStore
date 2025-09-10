@@ -78,10 +78,28 @@
 
             <!-- Phần sản phẩm -->
             <div class="products-section">
+                <div class="search-container">
+                    <form method="GET" action="{% url 'product_search' %}" class="search-form">
+                        <input type="text" name="q" placeholder="Tìm kiếm sản phẩm..." value="{{ search_query|default:'' }}" class="search-input" id="searchInput">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                    <div class="search-suggestions" id="searchSuggestions"></div>
+                </div>
                 <div class="products-header">
                     <div>
-                        <h2>Tất Cả Sản Phẩm</h2>
-                        <div class="results-count">Hiển thị 12 trong tổng số {{total_products}} sản phẩm</div>
+                        <h2>
+                            {% if search_query %}
+                                Kết quả tìm kiếm cho "{{ search_query }}"
+                            {% else %}
+                                Tất Cả Sản Phẩm
+                            {% endif %}
+                        </h2>
+                        <div class="results-count">
+                            Hiển thị {{ products|length }} trong tổng số {{ total_products }} sản phẩm
+                            {% if search_query %}phù hợp với tìm kiếm{% endif %}
+                        </div>
                     </div>
                     <select class="sort-select" onchange="sortProducts(this.value)">
                         <option value="default">Sắp xếp mặc định</option>
@@ -354,6 +372,69 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// xử lý đề xuất tìm kiếm
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded'); // Debug
+    
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    
+    if (!searchInput || !suggestionsContainer) {
+        console.error('Không tìm thấy search input hoặc suggestions container');
+        return;
+    }
+    
+    console.log('Elements found:', searchInput, suggestionsContainer); // Debug
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        console.log('Input changed:', query); // Debug
+        
+        if (query.length < 2) {
+            suggestionsContainer.style.display = 'none';
+            suggestionsContainer.innerHTML = '';
+            return;
+        }
+        
+        console.log('Fetching suggestions for:', query); // Debug
+        
+        // Gọi API đề xuất
+        fetch(`/products/search-suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => {
+                console.log('Response status:', response.status); // Debug
+                return response.json();
+            })
+            .then(data => {
+                console.log('Suggestions data:', data); // Debug
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    let html = '<ul>';
+                    data.suggestions.forEach(item => {
+                        html += `<li><a href="${item.url}">${item.name}</a></li>`;
+                    });
+                    html += '</ul>';
+                    suggestionsContainer.innerHTML = html;
+                    suggestionsContainer.style.display = 'block';
+                } else {
+                    suggestionsContainer.style.display = 'none';
+                    suggestionsContainer.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error); // Debug
+                suggestionsContainer.style.display = 'none';
+            });
+    });
+    
+    // Ẩn đề xuất khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (e.target !== searchInput && !suggestionsContainer.contains(e.target)) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+});
 </script>
+
 
 {% endblock %}

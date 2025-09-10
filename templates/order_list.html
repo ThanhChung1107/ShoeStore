@@ -130,6 +130,44 @@
             margin-top: 15px;
         }
     }
+    .orders-scrollable {
+    max-height: 500px; /* Chiều cao tối đa trước khi xuất hiện thanh cuộn */
+    overflow-y: auto; /* Hiển thị thanh cuộn dọc khi cần */
+    scrollbar-width: thin; /* Firefox */
+}
+
+/* Thiết kế thanh cuộn cho Webkit browsers (Chrome, Edge, Safari) */
+.orders-scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.orders-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.orders-scrollable::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.orders-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Đảm bảo các mục đơn hàng hiển thị đúng */
+.order-item {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr 1fr;
+    gap: 15px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    align-items: center;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
 </style>
 {% endblock %}
 
@@ -147,19 +185,21 @@
             <div>Thao tác</div>
         </div>
 
-        {% for order in orders %}
-        <div class="order-item">
-            <div class="order-id">#{{ order.id }}</div>
-            <div class="order-date">{{ order.created_at|date:"d/m/Y H:i" }}</div>
-            <div class="order-total">{{ order.total_price|floatformat:0|intcomma }}₫</div>
-            <div class="order-status {% if order.status == 'paid' %}status-paid{% else %}status-unpaid{% endif %}">
-                {{ order.get_status_display }}
+         <div class="orders-scrollable">
+            {% for order in orders %}
+            <div class="order-item">
+                <div class="order-id">#{{ order.id }}</div>
+                <div class="order-date">{{ order.created_at|date:"d/m/Y H:i" }}</div>
+                <div class="order-total">{{ order.total_price|floatformat:0|intcomma }}₫</div>
+                <div class="order-status {% if order.status == 'paid' %}status-paid{% else %}status-unpaid{% endif %}">
+                    {{ order.get_status_display }}
+                </div>
+                <a href="{% url 'order_detail' order.id %}" class="view-order-btn">
+                    Xem chi tiết
+                </a>
             </div>
-            <a href="{% url 'order_detail' order.id %}" class="view-order-btn">
-                Xem chi tiết
-            </a>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% else %}
     <div class="empty-orders">

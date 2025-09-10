@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-
+{% load humanize %}
 {% block content %}
 <div class="row head-background">
     <div class="col-2">
@@ -14,57 +14,73 @@
 </div>
 
 <!------------------------------ featured categories------------------------------>
-        <div class="categories">
-            <div class="small-container">
-                <div class="row-cate">
-                    <div class="col-3">
-                        <div class="flip-card">
-                            <div class="flip-card-inner">
-                                <div class="flip-card-front">
-                                    <img src="{% static 'image/category-1.jpg' %}" alt="Category 1">
-                                </div>
-                                <div class="flip-card-back">
-                                    <div class="back-content">
-                                        <h3>GIÀY THỂ THAO</h3>
-                                        <p>Khám phá bộ sưu tập mới nhất</p>
-                                    </div>
-                                </div>
+        <section id="home" class="section">
+            <div class="coverflow-wrapper">
+                <div class="info">
+                    <h2 id="current-title">Mountain Landscape</h2>
+                    <p id="current-description">Majestic peaks covered in snow during golden hour</p>
+                </div>
+
+                <div class="coverflow-container" tabindex="0">
+                    <div class="coverflow" id="coverflow">
+                        <div class="coverflow-item" data-index="0">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/ronaldo.jpg'%}" alt="Mountain Landscape" loading="lazy">
                             </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="1">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/giay-cau-long.webp'%}" alt="Forest Path" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="2">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/dep-messi.avif'%}" alt="Lake Reflection" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="3">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/sneaker.jpg'%}" alt="Ocean Sunset" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="4">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/giay_chay_bo.jpg'%}" alt="Desert Dunes" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="5">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/giay-tay.webp'%}" alt="Starry Night" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
+                        </div>
+                        <div class="coverflow-item" data-index="6">
+                            <div class="cover image-loading">
+                                <img src="{%static 'image/sandals.webp'%}" alt="Waterfall" loading="lazy">
+                            </div>
+                            <div class="reflection"></div>
                         </div>
                     </div>
-                    <div class="col-3">
-                        <div class="flip-card">
-                            <div class="flip-card-inner">
-                                <div class="flip-card-front">
-                                    <img src="{% static 'image/category-2.jpg' %}" alt="Category 2">
-                                </div>
-                                <div class="flip-card-back">
-                                    <div class="back-content">
-                                        <h3>GIÀY CHẠY BỘ</h3>
-                                        <p>Thoải mái cho mọi bước chân</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="flip-card">
-                            <div class="flip-card-inner">
-                                <div class="flip-card-front">
-                                    <img src="{% static 'image/category-3 (2).jpg' %}" alt="Category 3">
-                                </div>
-                                <div class="flip-card-back">
-                                    <div class="back-content">
-                                        <h3>GIÀY BÓNG RỔ</h3>
-                                        <p>Hiệu suất đỉnh cao</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                    <button class="nav-button prev" onclick="navigate(-1)">‹</button>
+                    <button class="nav-button next" onclick="navigate(1)">›</button>
+
+                    <div class="dots-container" id="dots"></div>
+                    
+                    <!-- Play/Pause Button -->
+                    <button class="play-pause-button" id="playPauseBtn" onclick="toggleAutoplay()">
+                        <span class="play-icon">▶</span>
+                        <span class="pause-icon" style="display: none;">❚❚</span>
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
+
 
         <!------------------------------ featured Products------------------------------>
     <div class="small-container">
@@ -83,7 +99,7 @@
                         <span class="brand-tag">{{ product.brand.name }}</span>
                         {% endif %}
                     </div>
-                    <div class="product-price">{{ product.price|floatformat:0 }}₫</div>
+                    <div class="product-price">{{product.price|intcomma }}₫</div>
                     {% if product.old_price %}
                     <div class="product-old-price">{{ product.old_price|floatformat:0 }}₫</div>
                     {% endif %}
@@ -114,7 +130,7 @@
                         <span class="brand-tag">{{ product.brand.name }}</span>
                         {% endif %}
                     </div>
-                    <div class="product-price">{{ product.price|floatformat:0 }}₫</div>
+                    <div class="product-price">{{product.price|intcomma }}₫</div>
                 </div>
             </div>
             {% empty %}
@@ -140,6 +156,7 @@
                 </div>
             </div>
         </div>
-            
+
 
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/templatemo-3d-coverflow-scripts.js' %}"></script>{% endblock %}

@@ -174,10 +174,6 @@ def payment_return(request):
                     order.payment_date = timezone.now()
                     order.transaction_id = vnp_TransactionNo
                     
-                    # Xóa sản phẩm đã thanh toán khỏi giỏ hàng
-                    if hasattr(order, 'selected_items'):
-                        order.selected_items.all().delete()
-                    
                     # Xóa session
                     session_keys = ['selected_items', 'pending_order_id']
                     for key in session_keys:
@@ -351,52 +347,92 @@ def refund(request):
 
 
 # Thêm các view mới cho integration với checkout
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-import uuid
+from django.http import JsonResponse
+from django.utils import timezone
+from django.conf import settings
+from datetime import datetime
+import hashlib
+import hmac
+import urllib.parse
 
+from cart.models import Cart, CartItem
+from orders.models import Order, OrderItem 
+from orders.forms import OrderForm
 # payments/views.py - FIXED create_payment_from_checkout
 
 @login_required
 def create_payment_from_checkout(request):
+    print(f"🔍 Method: {request.method}")
+    print(f"🔍 POST data: {request.POST}")
+    
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
         shipping_address = request.POST.get('shipping_address')
         amount = request.POST.get('amount', 0)
+        
+        print(f"🔍 Debug - payment_method: {payment_method}")
+        print(f"🔍 Debug - shipping_address: {shipping_address}")
+        print(f"🔍 Debug - amount: {amount}")
 
-        if not payment_method or not amount:
+        if not payment_method or not shipping_address:
+            print("❌ Missing payment_method or shipping_address")
             messages.error(request, 'Thông tin thanh toán không hợp lệ!')
+            return redirect('checkout')
+
+        # 🟢 CHỈ CHẤP NHẬN BANKING CHO VIEW NÀY
+        if payment_method != 'banking':
+            print("❌ Wrong payment method for this view")
+            messages.error(request, 'Phương thức thanh toán không hợp lệ!')
             return redirect('checkout')
 
         try:
             amount = float(amount)
-        except ValueError:
+            print(f"✅ Amount converted: {amount}")
+        except (ValueError, TypeError):
+            print("❌ Invalid amount")
             messages.error(request, 'Số tiền không hợp lệ!')
             return redirect('checkout')
 
-        # 🟢 TẠO ĐƠN HÀNG ĐÚNG VỚI MODEL
+        # 🟢 TẠO ĐƠN HÀNG
         try:
             # Lấy cart hiện tại của user
             cart = Cart.objects.get(user=request.user)
             
-            # Tạo order với các field có trong model
+            # Lấy selected items từ session
+            selected_items_ids = request.session.get('selected_items', [])
+            if not selected_items_ids:
+                messages.error(request, 'Không tìm thấy sản phẩm đã chọn!')
+                return redirect('checkout')
+            
+            selected_items = cart.items.filter(id__in=selected_items_ids)
+            if not selected_items.exists():
+                messages.error(request, 'Sản phẩm đã chọn không tồn tại!')
+                return redirect('checkout')
+            
+            # Tạo order
             order = Order.objects.create(
                 user=request.user,
-                cart=cart,  # 🟢 Required field
+                cart=cart,
                 shipping_address=shipping_address,
-                payment_method='banking' if payment_method == 'vnpay' else 'cod',  # 🟢 Đúng choices
-                status='unpaid'  # 🟢 Default status
+                payment_method='banking',  # 🟢 Vì đây là VNPay
+                status='unpaid'
             )
             
-            # 🟢 THÊM SELECTED_ITEMS từ session hoặc cart
-            selected_items_ids = request.session.get('selected_items', [])
-            if selected_items_ids:
-                # Lấy các items đã chọn
-                selected_items = cart.items.filter(id__in=selected_items_ids)
-                order.selected_items.set(selected_items)
-            else:
-                # Nếu không có selection, lấy tất cả items trong cart
-                order.selected_items.set(cart.items.all())
+            # Thêm selected items
+            order.selected_items.set(selected_items)
+            
+            # 🟢 TẠO ORDER ITEMS
+            for cart_item in selected_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.price,
+                    size=cart_item.size if cart_item.size else None
+                )
             
             print(f"✅ Created Order ID: {order.id}, Total: {order.total_price}")
             
@@ -404,44 +440,56 @@ def create_payment_from_checkout(request):
             messages.error(request, 'Giỏ hàng không tồn tại!')
             return redirect('checkout')
         except Exception as e:
+            print(f"❌ Error creating order: {str(e)}")
             messages.error(request, f'Lỗi tạo đơn hàng: {str(e)}')
             return redirect('checkout')
 
-        if payment_method == 'vnpay':
-            vnp = vnpay()
-            vnp.requestData['vnp_Version'] = '2.1.0'
-            vnp.requestData['vnp_Command'] = 'pay'
-            vnp.requestData['vnp_TmnCode'] = settings.VNPAY_TMN_CODE
-            vnp.requestData['vnp_Amount'] = int(float(order.total_price) * 100)  # 🟢 Dùng total_price
-            vnp.requestData['vnp_CurrCode'] = 'VND'
-            vnp.requestData['vnp_TxnRef'] = str(order.id)   # 🟢 Dùng id thật
-            vnp.requestData['vnp_OrderInfo'] = f'Thanh toán đơn hàng #{order.id} RedStore'
-            vnp.requestData['vnp_OrderType'] = 'other'
-            vnp.requestData['vnp_Locale'] = 'vn'
-            vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')
-            vnp.requestData['vnp_IpAddr'] = get_client_ip(request)
-            vnp.requestData['vnp_ReturnUrl'] = settings.VNPAY_RETURN_URL
-
-            # Lưu ID order vào session để dùng sau
-            request.session['pending_order_id'] = order.id
-
+        # 🟢 XỬ LÝ VNPAY
+        if payment_method == 'banking':
             try:
+                vnp = vnpay()
+                vnp.requestData['vnp_Version'] = '2.1.0'
+                vnp.requestData['vnp_Command'] = 'pay'
+                vnp.requestData['vnp_TmnCode'] = settings.VNPAY_TMN_CODE
+                vnp.requestData['vnp_Amount'] = int(order.total_price * 100)
+                vnp.requestData['vnp_CurrCode'] = 'VND'
+                vnp.requestData['vnp_TxnRef'] = str(order.id)
+                vnp.requestData['vnp_OrderInfo'] = f'Thanh toán đơn hàng #{order.id} RedStore'
+                vnp.requestData['vnp_OrderType'] = 'other'
+                vnp.requestData['vnp_Locale'] = 'vn'
+                vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')
+                vnp.requestData['vnp_IpAddr'] = get_client_ip(request)
+                vnp.requestData['vnp_ReturnUrl'] = settings.VNPAY_RETURN_URL
+
+                # Lưu order ID vào session
+                request.session['pending_order_id'] = order.id
+                request.session.modified = True
+                
+
                 payment_url = vnp.get_payment_url(settings.VNPAY_PAYMENT_URL, settings.VNPAY_HASH_SECRET_KEY)
+                print(f"🔗 VNPay URL: {payment_url}")
+                
                 return redirect(payment_url)
+                
             except Exception as e:
-                # Nếu lỗi tạo URL, xóa order
+                print(f"❌ VNPay Error: {str(e)}")
+                # Xóa order nếu lỗi tạo URL
                 order.delete()
                 messages.error(request, f'Lỗi tạo URL thanh toán: {str(e)}')
                 return redirect('checkout')
 
-        elif payment_method == 'cod':
-            # COD không cần VNPay
-            order.payment_method = 'cod'
-            order.save()
-            messages.success(request, f'Đặt hàng COD thành công! Mã đơn hàng: #{order.id}')
-            return redirect('payments:payment_success')
-
+    # Nếu không phải POST hoặc có lỗi
     return redirect('checkout')
+
+
+# 🟢 THÊM FUNCTION GET_CLIENT_IP NỮA
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def payment_success_page(request):
     """Trang thành công"""

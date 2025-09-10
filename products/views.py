@@ -7,6 +7,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
+from django.db.models import Q
 # Create your views here.
 def product(request):
     products = Product.objects.all().order_by('-created_at')
@@ -110,4 +111,76 @@ def product_details(request, product_id):
         'available_sizes': available_sizes,
         'related_products': related_products
     })
+# tìm kiếm sản phẩm
+def product_search(request):
+    """Xử lý tìm kiếm sản phẩm"""
+    
+    # Lấy danh sách các mục
+    products = Product.objects.all()
+    categories = Category.objects.all()
+    brands = Brand.objects.all()
+    
+    # Xử lý tìm kiếm
+    search_query = request.GET.get('q', '').strip()
+    
+    if search_query:
+        # Sử dụng Q objects để tìm kiếm OR logic
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |  # Đã sửa typo
+            Q(category__name__icontains=search_query) |
+            Q(brand__name__icontains=search_query)
+        ).distinct()  # distinct() để tránh duplicate
+    
+    total_products = products.count()
+    
+    # Phân trang
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'products': page_obj,
+        'categories': categories,
+        'brands': brands,
+        'search_query': search_query,
+        'total_products': total_products,
+    }
+    
+    return render(request, 'product.html', context)
 
+def search_suggestions(request):
+    query = request.GET.get('q', '')
+    print(f"Search suggestions query: {query}")  # Debug
+    
+    if query:
+        # Tìm sản phẩm phù hợp
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query)
+        )[:5]
+        
+        # Tìm danh mục phù hợp
+        categories = Category.objects.filter(
+            name__icontains=query
+        )[:3]
+        
+        suggestions = []
+        for product in products:
+            suggestions.append({
+                'type': 'Sản phẩm',
+                'name': product.name,
+                'url': f'/products/{product.id}/'  # Sửa theo URL pattern của bạn
+            })
+        
+        for category in categories:
+            suggestions.append({
+                'type': 'Danh mục',
+                'name': category.name,
+                'url': f'/products/?category={category.id}'
+            })
+        
+        print(f"Found {len(suggestions)} suggestions")  # Debug
+        return JsonResponse({'suggestions': suggestions})
+    
+    return JsonResponse({'suggestions': []})
