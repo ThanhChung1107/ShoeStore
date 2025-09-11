@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
-
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/product_review.css' %}">
+{% endblock %}
 {% block content %}
 <div class="small-container single-product">
     <div class="row">
@@ -107,6 +109,126 @@
 <div id="cart-notification">
     <span id="notification-message"></span>
 </div>
+<!-- Phần Đánh Giá Sản Phẩm -->
+<div class="small-container product-reviews-section">
+    <div class="reviews-header">
+        <h2>Đánh Giá Sản Phẩm</h2>
+        <div class="rating-summary">
+            <div class="average-rating">
+                <span class="rating-number">{{ average_rating|floatformat:1 }}</span>
+                <div class="stars">
+                    {% for i in "12345" %}
+                    <span class="star {% if i <= product.get_average_rating|floatformat:0 %}filled{% endif %}">★</span>
+                    {% endfor %}
+                </div>
+                <span class="total-reviews">{{ product.get_review_count }} đánh giá</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút viết đánh giá -->
+    {% if user.is_authenticated and can_review %}
+    <button class="btn-review" onclick="openReviewModal()">Viết Đánh Giá</button>
+    {% elif user.is_authenticated and not can_review%}
+    <div class="review-info">
+        <p>Bạn đã đánh giá sản phẩm này rồi.</p>
+    </div>
+    {% else %}
+    <div class="review-info">
+        <p>Vui lòng <a href="{% url 'login' %}">đăng nhập</a> và mua sản phẩm để đánh giá.</p>
+    </div>
+    {% endif %}
+
+    <!-- Danh sách đánh giá -->
+    <div class="reviews-list">
+        {% for review in product.reviews.all|slice:":5" %}
+        <div class="review-item">
+            <div class="review-header">
+                <div class="user-info">
+                    <img src="{{ review.user.avatar.url|default:'/static/images/default-avatar.png' }}" 
+                         alt="{{ review.user.username }}" class="user-avatar">
+                    <span class="user-name">{{ review.user.username }}</span>
+                </div>
+                <div class="review-rating">
+                    {% for i in "12345" %}
+                    <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">★</span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="review-content">
+                <p class="review-comment">{{ review.comment }}</p>
+                
+                {% if review.images.all %}
+                <div class="review-images">
+                    {% for image in review.images.all %}
+                    <img src="{{ image.image.url }}" alt="Review image" class="review-image">
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="review-date">{{ review.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+            
+            {% if review.shop_reply %}
+            <div class="shop-reply">
+                <div class="reply-header">
+                    <span class="shop-name">Phản hồi từ shop</span>
+                    <span class="reply-date">{{ review.replied_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <p class="reply-content">{{ review.shop_reply }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="no-reviews">
+            <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Nút xem thêm đánh giá -->
+    {% if product.get_review_count > 5 %}
+    <div class="view-more-reviews">
+        <a href="{% url 'product_reviews' product.id %}" class="btn-view-more">Xem tất cả đánh giá</a>
+    </div>
+    {% endif %}
+</div>
+<!-- Modal Đánh Giá -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeReviewModal()">&times;</span>
+        <h3>Đánh Giá Sản Phẩm</h3>
+        
+        <form id="reviewForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            
+            <div class="form-group">
+                <label>Đánh giá của bạn:</label>
+                <div class="rating-input">
+                    {% for i in "54321" %}
+                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                    <label for="star{{ i }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="comment">Nhận xét:</label>
+                <textarea name="comment" id="comment" rows="4" required placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="images">Ảnh đính kèm (tối đa 4 ảnh):</label>
+                <input type="file" name="images" id="images" multiple accept="image/*">
+                <div id="imagePreview"></div>
+            </div>
+            
+            <button type="submit" class="btn-submit">Gửi Đánh Giá</button>
+        </form>
+    </div>
+</div>
 <script>
 // JavaScript để xử lý thay đổi ảnh khi click vào thumbnail
 const productImg = document.getElementById("productImg");
@@ -199,5 +321,106 @@ function updateCartCount(count) {
         cartCountEl.textContent = count;
     }
 }
+// Modal functionality
+function openReviewModal() {
+    document.getElementById('reviewModal').style.display = 'block';
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('reviewModal');
+    if (event.target === modal) {
+        closeReviewModal();
+    }
+}
+
+// Image preview
+document.getElementById('images').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    const files = e.target.files;
+    const maxFiles = 4;
+    
+    if (files.length > maxFiles) {
+        alert(`Chỉ có thể tải lên tối đa ${maxFiles} ảnh`);
+        this.value = '';
+        return;
+    }
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.match('image.*')) {
+            alert('Chỉ được phép tải lên file ảnh');
+            this.value = '';
+            preview.innerHTML = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-image';
+            preview.appendChild(img);
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Form submission
+document.getElementById('reviewForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "add_review" product.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeReviewModal();
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra, vui lòng thử lại');
+    });
+});
+
+// Rating stars hover effect
+const stars = document.querySelectorAll('.rating-input label');
+stars.forEach((star, index) => {
+    star.addEventListener('mouseenter', () => {
+        for (let i = stars.length - 1; i >= index; i--) {
+            stars[i].style.color = '#ffd700';
+        }
+    });
+    
+    star.addEventListener('mouseleave', () => {
+        const checked = document.querySelector('.rating-input input:checked');
+        if (checked) {
+            const checkedIndex = parseInt(checked.value) - 1;
+            for (let i = 4; i >= 0; i--) {
+                stars[i].style.color = i <= checkedIndex ? '#ffd700' : '#ddd';
+            }
+        } else {
+            stars.forEach(s => s.style.color = '#ddd');
+        }
+    });
+});
 </script>
 {% endblock %}

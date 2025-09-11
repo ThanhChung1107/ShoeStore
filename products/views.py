@@ -1,6 +1,6 @@
 from django.shortcuts import render,get_object_or_404
 from django.core.paginator import Paginator
-from .models import Product, Category, Brand, ProductSize
+from .models import Product, Category, Brand, ProductSize, ProductReview, ReviewImage
 from django.http import JsonResponse
 from django.shortcuts import redirect
 import json
@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.db.models import Q
+from .forms import ProductReviewForm, ReviewImageForm
+from orders.models import OrderItem
 # Create your views here.
 def product(request):
     products = Product.objects.all().order_by('-created_at')
@@ -102,15 +104,32 @@ def filter_products(request):
     return redirect('product')
 
 def product_details(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
-    available_sizes = ProductSize.objects.filter(product=product, stock__gt=0).select_related('size')
-    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    product = get_object_or_404(Product, id=product_id)
+    available_sizes = ProductSize.objects.filter(product=product, stock__gt=0)
+    related_products = Product.objects.filter(
+        category=product.category
+    ).exclude(id=product.id)[:4]
     
-    return render(request, 'product_detail.html', {
+    # Kiểm tra user đã mua sản phẩm chưa
+    can_review = False
+    if request.user.is_authenticated:
+        can_review = OrderItem.objects.filter(
+            order__user=request.user,
+            product=product,
+            order__status='paid'
+        ).exists() and not ProductReview.objects.filter(
+            product=product, 
+            user=request.user
+        ).exists()
+    
+    context = {
         'product': product,
         'available_sizes': available_sizes,
-        'related_products': related_products
-    })
+        'related_products': related_products,
+        'can_review': can_review,
+    }
+    
+    return render(request, 'product_detail.html', context)
 # tìm kiếm sản phẩm
 def product_search(request):
     """Xử lý tìm kiếm sản phẩm"""
@@ -184,3 +203,84 @@ def search_suggestions(request):
         return JsonResponse({'suggestions': suggestions})
     
     return JsonResponse({'suggestions': []})
+
+#lấy danh sách review của sản phẩm
+from django.shortcuts import get_object_or_404, render
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Product, ProductReview
+from orders.models import OrderItem
+
+def product_reviews(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    reviews = product.reviews.all().select_related('user')
+
+    can_review = False
+    if request.user.is_authenticated:
+        # DEBUG: In ra thông tin để kiểm tra
+        print(f"User: {request.user.username}")
+        print(f"Product: {product.name}")
+        
+        # Kiểm tra user đã mua sản phẩm này chưa
+        has_purchased = OrderItem.objects.filter(
+            order__user=request.user,
+            product=product,
+            order__status='paid'
+        ).exists()
+        
+        print(f"Has purchased: {has_purchased}")
+        
+        # Kiểm tra user đã review sản phẩm chưa
+        has_reviewed = product.reviews.filter(user=request.user).exists()
+        print(f"Has reviewed: {has_reviewed}")
+        
+        can_review = has_purchased and not has_reviewed
+        print(f"Can review: {can_review}")
+
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'can_review': can_review,
+        'average_rating': product.get_average_rating(),
+        'total_reviews': reviews.count(),
+    }
+    return render(request, 'product_detail.html', context)
+
+def add_review(request, product_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Bạn cần đăng nhập để đánh giá'})
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    # Kiểm tra user đã mua sản phẩm chưa
+    has_purchased = OrderItem.objects.filter(
+        order__user=request.user,
+        product=product,
+        order__status='paid'
+    ).exists()
+    
+    if not has_purchased:
+        return JsonResponse({'success': False, 'error': 'Bạn cần mua sản phẩm trước khi đánh giá'})
+    
+    # Kiểm tra user đã đánh giá chưa
+    if ProductReview.objects.filter(product=product, user=request.user).exists():
+        return JsonResponse({'success': False, 'error': 'Bạn đã đánh giá sản phẩm này rồi'})
+    
+    if request.method == 'POST':
+        form = ProductReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
+            
+            # Xử lý ảnh đính kèm
+            images = request.FILES.getlist('images')
+            for image in images:
+                ReviewImage.objects.create(review=review, image=image)
+            
+            return JsonResponse({'success': True, 'message': 'Đánh giá thành công!'})
+        
+        return JsonResponse({'success': False, 'error': 'Dữ liệu không hợp lệ'})
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
