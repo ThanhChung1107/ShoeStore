@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/product_review.css' %}">
 {% endblock %}
@@ -32,7 +33,7 @@
         <div class="col-2">
             <p>Home / {{ product.category.name }}</p>
             <h1>{{ product.name }}</h1>
-            <h4>{{ product.price|floatformat:2 }}₫</h4>
+            <h4>{{ product.price|intcomma }}₫</h4>
             
             {% comment %} action="{% url 'add_to_cart' %}" method="post" {% endcomment %}
             <form action="{% url 'add_to_cart' product.id %}" method="POST" id="add-to-cart-form">
@@ -94,9 +95,9 @@
                         <span class="brand-tag">{{ related.brand.name }}</span>
                         {% endif %}
                     </div>
-                    <div class="product-price">{{ related.price|floatformat:0 }}₫</div>
+                    <div class="product-price">{{ related.price|intcomma }}₫</div>
                     {% if related.old_price %}
-                    <div class="product-old-price">{{ related.old_price|floatformat:0 }}₫</div>
+                    <div class="product-old-price">{{ related.old_price|intcomma }}₫</div>
                     {% endif %}
                 </div>
                 {% if related.discount_percent %}
@@ -131,7 +132,7 @@
     <button class="btn-review" onclick="openReviewModal()">Viết Đánh Giá</button>
     {% elif user.is_authenticated and not can_review%}
     <div class="review-info">
-        <p>Bạn đã đánh giá sản phẩm này rồi.</p>
+        {% comment %} <p>Bạn đã đánh giá sản phẩm này rồi.</p> {% endcomment %}
     </div>
     {% else %}
     <div class="review-info">

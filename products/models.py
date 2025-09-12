@@ -30,6 +30,16 @@ class Product(models.Model):
     # 👉 Hàm đếm số lượng reviews
     def get_review_count(self):
         return self.reviews.count()
+    def get_total_sold(self):
+        from django.db.models import Sum
+        from orders.models import OrderItem
+        
+        total = OrderItem.objects.filter(
+            product=self,
+            order__status='paid'
+        ).aggregate(total_sold=Sum('quantity'))['total_sold']
+    
+        return total or 0
 
 class ProductSize(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="sizes")

@@ -141,22 +141,66 @@
         </div>
     </div>
 
-        <div class="offer">
-            <div class="small-container">
-                <div class="row">
-                    <div class="col-2">
-                        <img src="{%static 'image/image1.png'%}" class="offer-img">
-                    </div>
-                    <div class="col-2">
-                        <p>Exclusively Available on RedStore</p>
-                        <h1>Sports Shoes</h1>
-                        <small> Buy latest collections of sports shoes online on Redstore at best prices from top brands such as Adidas, Nike, Puma, Asics, and Sparx at your leisure at best prices. </small><br>
-                        <a href="" class="btn">Buy Now &#8594;</a>
-                    </div>
+<!------------------------------ Best Selling Products Slider ------------------------------>
+<div class="best-selling-product">
+    <h2 class="title">Sản phẩm bán chạybài cũ ô kính thì anh đùa</h2>
+    <div class="product-slider-container">
+    <!-- Navigation arrows (optional) -->
+        <button class="slider-nav prev">‹</button>
+        <button class="slider-nav next">›</button>
+        
+        <div class="product-slider-wrapper">
+            {% for product in best_selling_products %}
+            <div class="slider-item">
+                <div class="best-product-card">
+                    <a href="{% url 'product_detail' product.id %}">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="best-product-image">
+                        
+                        <div class="best-product-info">
+                            <h4 class="best-product-name">{{ product.name }}</h4>
+                            <div class="best-product-rating">
+                                <div class="stars">
+                                    {% for i in "12345" %}
+                                    <span class="star filled">★</span>
+                                    {% endfor %}
+                                </div>
+                                <span class="rating-count">({{ product.five_star_count }} đánh giá)</span>
+                            </div>
+                            <div class="price-sales">
+                                <div class="best-product-price">{{ product.price|intcomma }}₫</div>
+                                <div class="sales-badge">Đã bán: {{ product.total_sold }}</div>
+                            </div>
+                        </div>
+                    </a>
                 </div>
+                        
+                        <!-- Hiển thị đánh giá 5 sao gần nhất -->
+                        {% for review_id, review_info in product_reviews.items %}
+                            {% if review_id == product.id and review_info.user_name %}
+                            <div class="latest-review">
+                                <div class="reviewer-info">
+                                    <img src="{{ review_info.user_avatar|default:'/static/images/default-avatar.png' }}" 
+                                        alt="{{ review_info.user_name }}" class="reviewer-avatar">
+                                    <span class="reviewer-name">{{ review_info.user_name }}</span>
+                                </div>
+                                <div class="review-comment">
+                                    "{{ review_info.comment|truncatewords:12 }}"
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
             </div>
+            {% endfor %}
         </div>
-
+        
+        <!-- Indicators (optional) -->
+        <div class="slider-indicators">
+            {% for product in best_selling_products %}
+            <div class="indicator {% if forloop.first %}active{% endif %}"></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 {% block extra_js %}<script src="{% static 'js/templatemo-3d-coverflow-scripts.js' %}"></script>{% endblock %}

@@ -7,7 +7,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Sum, Count, Q
 from .forms import ProductReviewForm, ReviewImageForm
 from orders.models import OrderItem
 # Create your views here.
@@ -284,3 +284,4 @@ def add_review(request, product_id):
         return JsonResponse({'success': False, 'error': 'Dữ liệu không hợp lệ'})
     
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
