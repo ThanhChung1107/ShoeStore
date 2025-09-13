@@ -283,89 +283,52 @@
         updateCoverflow();
         startAutoplay();
 
-document.addEventListener('DOMContentLoaded', function() {
-    const track = document.querySelector('.slider-track');
-    const items = document.querySelectorAll('.slider-item');
-    const prevBtn = document.querySelector('.slider-prev');
-    const nextBtn = document.querySelector('.slider-next');
-    const dotsContainer = document.getElementById('sliderDots');
+ // JavaScript cho slider
+    const wrapper = document.querySelector('.product-slider-wrapper');
+    const indicators = document.querySelectorAll('.indicator');
+    const prevBtn = document.querySelector('.slider-nav.prev');
+    const nextBtn = document.querySelector('.slider-nav.next');
     
-    if (!track || !items.length) return;
-    
-    let currentPosition = 0;
-    let currentIndex = 0;
-    const itemWidth = items[0].offsetWidth + 20; // width + gap
-    
-    // Create dots
-    items.forEach((_, index) => {
-        const dot = document.createElement('div');
-        dot.className = 'slider-dot';
-        if (index === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => goToSlide(index));
-        dotsContainer.appendChild(dot);
-    });
-    
-    const dots = document.querySelectorAll('.slider-dot');
-    
-    function updateSlider() {
-        track.style.transform = `translateX(-${currentPosition}px)`;
+    let currentSlide = 0;
+    const totalSlides = document.querySelectorAll('.slider-item').length;
+
+    function updateSlider(slideIndex) {
+        wrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
         
-        // Update active dot
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentIndex);
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle('active', index === slideIndex);
         });
     }
-    
-    function goToSlide(index) {
-        currentIndex = index;
-        currentPosition = index * itemWidth;
-        updateSlider();
-    }
-    
+
     function nextSlide() {
-        const maxIndex = Math.floor((items.length * itemWidth - track.offsetWidth) / itemWidth);
-        if (currentIndex < maxIndex) {
-            currentIndex++;
-            currentPosition = currentIndex * itemWidth;
-            updateSlider();
-        }
+        currentSlide = (currentSlide + 1) % totalSlides;
+        updateSlider(currentSlide);
     }
-    
+
     function prevSlide() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            currentPosition = currentIndex * itemWidth;
-            updateSlider();
-        }
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        updateSlider(currentSlide);
     }
-    
-    // Event listeners
-    prevBtn.addEventListener('click', prevSlide);
+
     nextBtn.addEventListener('click', nextSlide);
-    
+    prevBtn.addEventListener('click', prevSlide);
+
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            currentSlide = index;
+            updateSlider(currentSlide);
+        });
+    });
+
     // Auto slide
-    let autoSlideInterval = setInterval(nextSlide, 5000);
-    
-    // Pause on hover
-    const slider = document.querySelector('.best-sellers-slider');
-    slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
-    slider.addEventListener('mouseleave', () => {
-        autoSlideInterval = setInterval(nextSlide, 5000);
+    let autoSlideInterval = setInterval(nextSlide, 2500);
+
+    const productSliderContainer = document.querySelector('.product-slider-container');
+    productSliderContainer.addEventListener('mouseenter', () => {
+        clearInterval(autoSlideInterval);
     });
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        const newItemWidth = items[0].offsetWidth + 20;
-        if (itemWidth !== newItemWidth) {
-            currentPosition = Math.round(currentPosition / itemWidth) * newItemWidth;
-            itemWidth = newItemWidth;
-            updateSlider();
-        }
+
+    productSliderContainer.addEventListener('mouseleave', () => {
+        autoSlideInterval = setInterval(nextSlide, 4000);
     });
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') prevSlide();
-        if (e.key === 'ArrowRight') nextSlide();
-    });
-});
+//trahaly

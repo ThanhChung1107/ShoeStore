@@ -151,7 +151,7 @@ def home(request):
      # Lấy đánh giá 5 sao mới nhất cho mỗi sản phẩm
     # Lấy sản phẩm bán chạy nhất
     best_selling_products = Product.objects.annotate(
-        total_sold=Sum('order_items__quantity', filter=Q(order_items__order__status='paid')),
+        total_sold=Sum('order_items__quantity'),
         five_star_count=Count('reviews', filter=Q(reviews__rating=5))
     ).filter(
         total_sold__gt=0,

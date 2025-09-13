@@ -179,12 +179,24 @@ p{
     padding-left: 25px;
     padding-right: 25px;   
 }
+.product-item {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(52,152,219,0.10);
+    transition: box-shadow 0.3s, transform 0.3s;
+    padding: 18px 10px;
+}
+.product-item:hover {
+    box-shadow: 0 8px 32px rgba(52,152,219,0.18);
+    transform: translateY(-4px) scale(1.03);
+}
 .col-4{
     flex-basis: 25%;
     padding: 10px;
     min-width: 200px;
     margin-bottom: 50px;
     transition: transform 0.5s;
+    text-align: center;
 }
 .col-4 .product-image {
     width: 217px;
@@ -1458,6 +1470,7 @@ form {
 
 /* Best Selling Products Slider */
 .best-selling-product {
+    padding:  40px 0;
     background: radial-gradient(#fff, #ffd6d6);
 }
     .product-slider-container {
@@ -1470,6 +1483,7 @@ form {
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         height: 350px;
         background: white;
+        border: 8px solid rgba(105, 105, 105, 0.3); /* màu xám, độ trong suốt 0.3 */
 
     }
 
@@ -1498,6 +1512,7 @@ form {
         border: 2px solid transparent;
         display: flex;
         align-items: center;
+        max-width: 540px;
     }
 
     .best-product-card:hover {
@@ -1631,9 +1646,8 @@ form {
     }
 
     .review-comment {
-        font-size: 12px;
+        font-size: 16px;
         color: #555;
-        font-style: italic;
         line-height: 1.4;
         display: -webkit-box;
         -webkit-line-clamp: 2;
