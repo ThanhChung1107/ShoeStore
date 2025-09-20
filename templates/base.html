@@ -93,7 +93,45 @@
             
         </div>
     </div>
+<!-- Chat Button -->
+<div class="chat-button" id="chat-button">
+    <i class="fas fa-comments"></i>
+</div>
 
+<!-- Chat Modal -->
+<div class="chat-modal" id="chat-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Chat hỗ trợ</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            {% if user.is_authenticated %}
+                {% if user.is_admin %}
+                    <p>Bạn đang đăng nhập với tư cách admin. Vui lòng sử dụng trang quản lý chat.</p>
+                    <a href="{% url 'admin_chat_dashboard' %}" class="btn btn-primary">Đến trang quản lý chat</a>
+                {% else %}
+                    <div id="chat-container">
+                        <div class="chat-messages" id="user-chat-messages"></div>
+                        <div class="chat-input">
+                            <input type="text" id="user-chat-input" placeholder="Nhập tin nhắn...">
+                            <button id="user-chat-submit">Gửi</button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p>Vui lòng <a href="{% url 'login' %}">đăng nhập</a> để sử dụng tính năng chat.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    // Biến toàn cục để xác định user có phải admin không
+    const userIsAdmin = {% if user.is_authenticated and user.is_admin %}true{% else %}false{% endif %};
+    const currentUserId = {% if user.is_authenticated %}'{{ user.id }}'{% else %}null{% endif %};
+</script>
+
+<script src="{% static 'js/admin_chat.js' %}"></script>
     <script>
         var menuItems = document.getElementById("MenuItems");
         MenuItems.style.maxHeight = "0px";
@@ -112,5 +150,6 @@
 
     </script>
     {% block extra_js %}{% endblock %}
+    
 </body>
 </html>

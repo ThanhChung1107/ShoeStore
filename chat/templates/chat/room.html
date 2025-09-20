@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Chat với hỗ trợ viên</h2>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+        {% for message in messages %}
+            <div class="message {% if message.sender == user %}my-message{% else %}other-message{% endif %}">
+                <div class="message-content">
+                    {{ message.content }}
+                </div>
+                <div class="message-time">
+                    {{ message.timestamp|time }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="chat-input">
+        <input type="text" id="chat-message-input" placeholder="Nhập tin nhắn...">
+        <button id="chat-message-submit">Gửi</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const roomName = '{{ room_name }}';
+    const currentUserId = '{{ user.id }}';
+</script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

@@ -28,6 +28,8 @@ urlpatterns = [
     path('order/',include('orders.urls')),
     path('pay/',include('payments.urls')),
     path('payment/', include('payments.urls')),
+    path('discounts/', include('discounts.urls')),
+    path('chat/',include('chat.urls')),
 
 ]
 if settings.DEBUG:

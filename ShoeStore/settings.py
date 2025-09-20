@@ -46,17 +46,11 @@ INSTALLED_APPS = [
     'payments',
     'brands.apps.BrandsConfig',
     'channels',
+    'discounts',
+    'chat',
 ]
 
-# Channel layers cho Redis
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
-}
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -104,6 +98,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ShoeStore.wsgi.application'
+
+# Channel layers cho Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database

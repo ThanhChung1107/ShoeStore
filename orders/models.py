@@ -5,6 +5,7 @@ from django.utils import timezone
 from cart.models import Cart
 from django.contrib.auth import get_user_model
 from products.models import Product
+from discounts.models import Discount
 
 User = get_user_model()
 
@@ -27,6 +28,25 @@ class Order(models.Model):
     payment_date = models.DateTimeField(blank=True, null=True)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     selected_items = models.ManyToManyField('cart.CartItem')
+    discount = models.ForeignKey(
+        Discount, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="Mã giảm giá áp dụng"
+    )
+    discount_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        verbose_name="Số tiền được giảm"
+    )
+    final_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        verbose_name="Tổng thanh toán"
+    )
     @property
     def total_price(self):
         # Sử dụng OrderItem để tính tổng thay vì CartItem

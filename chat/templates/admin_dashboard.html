@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-chat-container">
+    <h2>Quản lý chat với khách hàng</h2>
+    <div class="chat-rooms-list">
+        {% for room in chat_rooms %}
+            <div class="chat-room-item" data-room-name="{{ room.name }}">
+                <div class="room-info">
+                    <h4>Phòng: {{ room.name }}</h4>
+                    <p>Số tin nhắn: {{ room.messages.count }}</p>
+                </div>
+                <button class="join-room-btn">Tham gia</button>
+            </div>
+        {% empty %}
+            <p>Hiện không có phòng chat nào.</p>
+        {% endfor %}
+    </div>
+    
+    <div class="chat-modal" id="admin-chat-modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-room-name">Chat với khách hàng</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="chat-messages" id="admin-chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="admin-chat-input" placeholder="Nhập tin nhắn...">
+                    <button id="admin-chat-submit">Gửi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin_chat.js' %}"></script>
+{% endblock %}
