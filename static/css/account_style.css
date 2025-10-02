@@ -177,25 +177,47 @@ body form {
             color: var(--secondary-color);
             text-decoration: underline;
         }
+#RegForm {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* Tạo khoảng trống cho scrollbar */
+}
 
-        .scroll-container {
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
+#RegForm.active {
+    display: block;
+    max-height: 400px;
+    overflow-y: auto;
+}
 
-        .scroll-container::-webkit-scrollbar {
-            width: 5px;
-        }
+.scroll-container {
+    max-height: 400px; /* Hoặc chiều cao phù hợp với thiết kế của bạn */
+    overflow-y: auto;
+    width: 100%;
+}
 
-        .scroll-container::-webkit-scrollbar-track {
-            background: var(--light-gray);
-        }
+/* Đảm bảo form trong scroll-container chiếm toàn bộ chiều rộng */
+.scroll-container form {
+    width: 100%;
+}
 
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
+/* Tùy chọn: tùy chỉnh thanh cuộn cho đẹp hơn */
+.scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 
         /* Animation classes */
         .slide-in-left {

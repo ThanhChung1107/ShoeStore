@@ -120,23 +120,18 @@ def register(request):
                     user.address = address
                 user.save()
                 
-                login(request, user)
-                messages.success(request, 'Đăng ký thành công!')
+                # KHÔNG login tự động, chỉ thông báo thành công
+                messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
                 
-                next_url = request.session.get('next_url', '/')
-                if 'next_url' in request.session:
-                    del request.session['next_url']
+                # REDIRECT VỀ TRANG LOGIN
+                return redirect('login')
                     
-                return redirect(next_url)
             except Exception as e:
                 messages.error(request, f'Có lỗi xảy ra: {str(e)}')
     
-    next_url = request.session.get('next_url', '')
     return render(request, 'users/login_signup.html', {
-        'next_url': next_url,
         'active_tab': 'register'
     })
-
 
 def home(request):
     # Lấy sản phẩm nổi bật (ví dụ: 4 sản phẩm được tạo gần nhất)

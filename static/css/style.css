@@ -796,9 +796,10 @@ button.btn-cart:hover {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 280px)); /* Giữ cố định width */
     gap: 25px;
     margin-bottom: 30px;
+    justify-content: center; /* Căn giữa các sản phẩm */
 }
 .product-name {
     display: -webkit-box;
@@ -816,11 +817,15 @@ button.btn-cart:hover {
     text-align: center;
     transition: transform 0.3s, box-shadow 0.3s;
     border: 1px solid #eee;
+    width: 100%; /* Chiếm toàn bộ không gian grid cell */
+    max-width: 280px; /* Giới hạn chiều rộng tối đa */
+    margin: 0 auto; /* Căn giữa card */
 }
 .product-link {
         text-decoration: none;
         color: inherit;
         display: block;
+         width: 100%;
     }
     .product-card:hover {
         transform: translateY(-5px);

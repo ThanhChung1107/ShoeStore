@@ -151,10 +151,15 @@
                     <span class="user-name">{{ review.user.username }}</span>
                 </div>
                 <div class="review-rating">
+                    
                     {% for i in "12345" %}
-                    <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">★</span>
+                        <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}" 
+                            style="color: {% if forloop.counter <= review.rating %}#ffc107{% else %}#ddd{% endif %};">
+                            ★
+                        </span>
                     {% endfor %}
                 </div>
+
             </div>
             
             <div class="review-content">
@@ -208,7 +213,7 @@
             <div class="form-group">
                 <label>Đánh giá của bạn:</label>
                 <div class="rating-input">
-                    {% for i in "54321" %}
+                    {% for i in "12345" %}
                     <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
                     <label for="star{{ i }}">★</label>
                     {% endfor %}

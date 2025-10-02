@@ -184,3 +184,11 @@ VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'  # get 
 VNPAY_API_URL = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
 VNPAY_TMN_CODE = 'YCWWRHWC'  # Website ID in VNPAY System, get from config
 VNPAY_HASH_SECRET_KEY = 'M2SHPUB1NC2KTVTTWEHOF8IVA2527W7V'  # Secret key for create checksum,get from config
+
+#cho phép gửi cookie sau khi redirect vể từ VNPAY
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]

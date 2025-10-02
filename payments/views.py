@@ -179,9 +179,9 @@ def payment_return(request):
                     for key in session_keys:
                         if key in request.session:
                             del request.session[key]
-                    
                     order.save()
-                    
+                    print("DEBUG USER:", request.user, request.user.is_authenticated)
+                    print("SESSION KEYS:", request.session.keys())
                     # Hiển thị trang thành công
                     return render(request, "payment/payment_return.html", {
                         "title": "Kết quả thanh toán",
