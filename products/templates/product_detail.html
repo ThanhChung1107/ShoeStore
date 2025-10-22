@@ -35,6 +35,13 @@
             <h1>{{ product.name }}</h1>
             <h4>{{ product.price|intcomma }}₫</h4>
             
+            <!-- Nút mở modal gợi ý size -->
+            <div class="size-suggestion">
+                <button type="button" class="btn-size-help" onclick="openSizeModal()">
+                    <i class="fa fa-question-circle"></i> Không biết chọn size?
+                </button>
+            </div>
+            
             {% comment %} action="{% url 'add_to_cart' %}" method="post" {% endcomment %}
             <form action="{% url 'add_to_cart' product.id %}" method="POST" id="add-to-cart-form">
                 {% csrf_token %}
@@ -110,6 +117,54 @@
 <div id="cart-notification">
     <span id="notification-message"></span>
 </div>
+
+<!-- Modal Gợi ý Chọn Size -->
+<div id="sizeModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeSizeModal()">&times;</span>
+        <h3>Gợi ý Chọn Size</h3>
+        <p class="modal-description">Nhập kích thước bàn chân để được gợi ý size phù hợp nhất.</p>
+        
+        <form id="sizeForm">
+            <div class="form-group">
+                <label for="footLength">Chiều dài bàn chân (cm):</label>
+                <input type="number" id="footLength" name="footLength" step="0.1" min="10" max="35" required>
+                <small>Đo từ gót chân đến đầu ngón chân dài nhất</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="footWidth">Chiều rộng bàn chân (cm):</label>
+                <input type="number" id="footWidth" name="footWidth" step="0.1" min="5" max="15" required>
+                <small>Đo tại phần rộng nhất của bàn chân</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="footType">Loại bàn chân:</label>
+                <select id="footType" name="footType">
+                    <option value="normal">Bình thường</option>
+                    <option value="wide">Rộng</option>
+                    <option value="narrow">Hẹp</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeSizeModal()">Hủy</button>
+                <button type="submit" class="btn-submit">Gợi ý Size</button>
+            </div>
+        </form>
+        
+        <div id="sizeResult" class="size-result" style="display: none;">
+            <h4>Gợi ý Size:</h4>
+            <div id="recommendedSize" class="recommended-size"></div>
+            <div id="sizeExplanation" class="size-explanation"></div>
+            <div class="result-actions">
+                <button type="button" class="btn-apply" onclick="applyRecommendedSize()">Áp dụng Size này</button>
+                <button type="button" class="btn-reset" onclick="resetSizeForm()">Nhập lại</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Phần Đánh Giá Sản Phẩm -->
 <div class="small-container product-reviews-section">
     <div class="reviews-header">
@@ -235,6 +290,155 @@
         </form>
     </div>
 </div>
+
+<style>
+/* CSS cho modal gợi ý size */
+.size-suggestion {
+    margin-bottom: 15px;
+}
+
+.btn-size-help {
+    background-color: #f0f8ff;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-size-help:hover {
+    background-color: #e1f0ff;
+}
+
+.modal-description {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.size-result {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.recommended-size {
+    font-size: 24px;
+    font-weight: bold;
+    color: #28a745;
+    margin: 10px 0;
+}
+
+.size-explanation {
+    margin: 10px 0;
+    color: #555;
+}
+
+.result-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-apply {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-reset {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-cancel {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Modal chung */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+}
+</style>
+
 <script>
 // JavaScript để xử lý thay đổi ảnh khi click vào thumbnail
 const productImg = document.getElementById("productImg");
@@ -252,6 +456,123 @@ document.querySelectorAll('.size-option').forEach(radio => {
         document.getElementById('selected_size').value = this.value;
     });
 });
+
+// Modal gợi ý size
+function openSizeModal() {
+    document.getElementById('sizeModal').style.display = 'block';
+    resetSizeForm();
+}
+
+function closeSizeModal() {
+    document.getElementById('sizeModal').style.display = 'none';
+}
+
+function resetSizeForm() {
+    document.getElementById('sizeForm').reset();
+    document.getElementById('sizeResult').style.display = 'none';
+    document.getElementById('sizeForm').style.display = 'block';
+}
+
+// Xử lý form gợi ý size
+document.getElementById('sizeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const footLength = parseFloat(document.getElementById('footLength').value);
+    const footWidth = parseFloat(document.getElementById('footWidth').value);
+    const footType = document.getElementById('footType').value;
+    
+    // Thuật toán đơn giản để gợi ý size
+    // Trong thực tế, bạn có thể cần một bảng tra cứu phức tạp hơn
+    let recommendedSize = calculateSize(footLength, footWidth, footType);
+    
+    // Hiển thị kết quả
+    document.getElementById('recommendedSize').textContent = `Size ${recommendedSize.size}`;
+    document.getElementById('sizeExplanation').textContent = recommendedSize.explanation;
+    
+    // Lưu size được gợi ý để sử dụng sau
+    document.getElementById('sizeResult').setAttribute('data-recommended-size', recommendedSize.size);
+    
+    document.getElementById('sizeForm').style.display = 'none';
+    document.getElementById('sizeResult').style.display = 'block';
+});
+
+function calculateSize(length, width, type) {
+    // Bảng tra cứu size dựa trên chiều dài bàn chân
+    const sizeChart = [
+        { min: 20.0, max: 20.5, size: "35" },
+        { min: 20.6, max: 21.0, size: "36" },
+        { min: 21.1, max: 21.5, size: "37" },
+        { min: 21.6, max: 22.0, size: "38" },
+        { min: 22.1, max: 22.5, size: "39" },
+        { min: 22.6, max: 23.0, size: "40" },
+        { min: 23.1, max: 23.5, size: "41" },
+        { min: 23.6, max: 24.0, size: "42" },
+        { min: 24.1, max: 24.5, size: "43" },
+        { min: 24.6, max: 25.0, size: "44" }
+    ];
+    
+    // Tìm size dựa trên chiều dài
+    let size = "38"; // Mặc định
+    let found = false;
+    let explanation = "";
+    
+    for (const item of sizeChart) {
+        if (length >= item.min && length <= item.max) {
+            size = item.size;
+            explanation = `Dựa trên chiều dài bàn chân ${length}cm, chúng tôi đề xuất size ${size}.`;
+            found = true;
+            break;
+        }
+    }
+    
+    // Nếu không tìm thấy size phù hợp
+    if (!found) {
+        explanation = `Không có sản phẩm nào phù hợp với kích thước chân của bạn (${length}cm).`;
+        return {
+            size: null,
+            explanation: explanation
+        };
+    }
+    
+    // Điều chỉnh dựa trên chiều rộng và loại bàn chân
+    if (type === "wide" && width > 9.5) {
+        explanation += " Với bàn chân rộng, bạn có thể cân nhắc chọn size lớn hơn.";
+    } else if (type === "narrow" && width < 8.5) {
+        explanation += " Với bàn chân hẹp, bạn có thể cân nhắc chọn size nhỏ hơn.";
+    }
+    
+    return {
+        size: size,
+        explanation: explanation
+    };
+}
+
+function applyRecommendedSize() {
+    const recommendedSize = document.getElementById('sizeResult').getAttribute('data-recommended-size');
+    
+    // Tìm và chọn size được gợi ý
+    const sizeOptions = document.querySelectorAll('.size-option');
+    for (const option of sizeOptions) {
+        const sizeLabel = document.querySelector(`label[for="${option.id}"]`);
+        if (sizeLabel && sizeLabel.textContent.includes(recommendedSize)) {
+            option.checked = true;
+            document.getElementById('selected_size').value = option.value;
+            
+            // Cuộn đến phần chọn size
+            document.querySelector('.size-selection').scrollIntoView({ behavior: 'smooth' });
+            
+            // Đóng modal
+            closeSizeModal();
+            
+            // Thông báo
+            showNotification(`Đã chọn size ${recommendedSize} theo gợi ý`, 'success');
+            return;
+        }
+    }
+    
+    // Nếu không tìm thấy size được gợi ý
+    showNotification(`Không tìm thấy size ${recommendedSize} trong danh sách có sẵn`, 'error');
+}
 
 document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
     e.preventDefault()
@@ -288,6 +609,12 @@ document.getElementById('add-to-cart-form').addEventListener('submit', function(
     })
     .then(response => response.json())
     .then(data => {
+        // KIỂM TRA NẾU CẦN CHUYỂN HƯỚNG ĐẾN LOGIN
+        if (data.redirect && data.login_required) {
+            window.location.href = data.login_url;
+            return;
+        }
+        
         if (data.success) {
             // Hiển thị thông báo
             showNotification(data.message);
@@ -296,6 +623,8 @@ document.getElementById('add-to-cart-form').addEventListener('submit', function(
             if (data.cart_count !== undefined) {
                 updateCartCount(data.cart_count);
             }
+        } else {
+            showNotification(data.message || 'Có lỗi xảy ra!', 'error');
         }
     })
     .catch(error => {
@@ -327,7 +656,8 @@ function updateCartCount(count) {
         cartCountEl.textContent = count;
     }
 }
-// Modal functionality
+
+// Modal đánh giá functionality
 function openReviewModal() {
     document.getElementById('reviewModal').style.display = 'block';
 }
@@ -339,8 +669,12 @@ function closeReviewModal() {
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('reviewModal');
+    const sizeModal = document.getElementById('sizeModal');
     if (event.target === modal) {
         closeReviewModal();
+    }
+    if (event.target === sizeModal) {
+        closeSizeModal();
     }
 }
 
@@ -378,7 +712,7 @@ document.getElementById('images').addEventListener('change', function(e) {
     }
 });
 
-// Form submission
+// Form submission đánh giá
 document.getElementById('reviewForm').addEventListener('submit', function(e) {
     e.preventDefault();
     

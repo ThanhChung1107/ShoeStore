@@ -27,6 +27,17 @@ def add_to_cart(request, product_id):
     if not request.user.is_authenticated:
         current_url = request.META.get('HTTP_REFERER') or '/'
         request.session['next_url'] = current_url
+        
+        # XỬ LÝ AJAX REQUEST KHI CHƯA ĐĂNG NHẬP
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                "success": False,
+                "redirect": True,
+                "login_required": True,
+                "login_url": reverse('login'),
+                "message": "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!"
+            }, status=200)  # Để status 200 để JavaScript dễ xử lý
+        
         messages.info(request, "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!")
         return redirect('login')
 
@@ -44,6 +55,12 @@ def add_to_cart(request, product_id):
             selected_size = Size.objects.get(id=size_id)
             print(f"DEBUG: Size object: {selected_size} (value: {selected_size.value})")
         except Size.DoesNotExist:
+            # XỬ LÝ AJAX REQUEST CHO LỖI SIZE
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    "success": False,
+                    "message": "Size không hợp lệ!"
+                })
             messages.error(request, "Size không hợp lệ!")
             return redirect(request.META.get('HTTP_REFERER', 'product_detail'))
     
@@ -75,7 +92,7 @@ def add_to_cart(request, product_id):
         created = True
         print(f"DEBUG: Created new item, quantity: {cart_item.quantity}, size: {cart_item.size}")
 
-    # Response
+    # Response cho AJAX request
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         size_text = f" (Size: {selected_size.value})" if selected_size else ""
         return JsonResponse({
@@ -85,6 +102,7 @@ def add_to_cart(request, product_id):
             "quantity_added": quantity
         })
 
+    # Response cho normal request
     size_text = f" (Size: {selected_size.value})" if selected_size else ""
     messages.success(request, f"Đã thêm {quantity} x {product.name}{size_text} vào giỏ hàng!")
     return redirect(request.META.get('HTTP_REFERER', 'cart_detail'))
