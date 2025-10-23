@@ -9,4 +9,7 @@ urlpatterns = [
     path('search-suggestions/', views.search_suggestions, name='search_suggestions'),
     path('product/<int:product_id>/reviews/', views.product_reviews, name='product_reviews'),
     path('product/<int:product_id>/add-review/', views.add_review, name='add_review'),
+
+    path('clear-search-history/', views.clear_search_history, name='clear_search_history'),
+    path('delete-search-item/', views.delete_search_item, name='delete_search_item'),
 ]

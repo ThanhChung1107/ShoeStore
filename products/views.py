@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from .forms import ProductReviewForm, ReviewImageForm
 from orders.models import OrderItem
+from .models import SearchHistory
 # Create your views here.
 def product(request):
     products = Product.objects.all().order_by('-created_at')
@@ -131,29 +132,35 @@ def product_details(request, product_id):
     
     return render(request, 'product_detail.html', context)
 # tìm kiếm sản phẩm
+# products/views.py - Cập nhật các function này
+
+from .models import SearchHistory
+
 def product_search(request):
     """Xử lý tìm kiếm sản phẩm"""
-    
-    # Lấy danh sách các mục
     products = Product.objects.all()
     categories = Category.objects.all()
     brands = Brand.objects.all()
     
-    # Xử lý tìm kiếm
     search_query = request.GET.get('q', '').strip()
     
     if search_query:
-        # Sử dụng Q objects để tìm kiếm OR logic
         products = products.filter(
             Q(name__icontains=search_query) |
-            Q(description__icontains=search_query) |  # Đã sửa typo
+            Q(description__icontains=search_query) |
             Q(category__name__icontains=search_query) |
             Q(brand__name__icontains=search_query)
-        ).distinct()  # distinct() để tránh duplicate
+        ).distinct()
+        
+        # 👉 LƯU LỊCH SỬ TÌM KIẾM
+        if request.user.is_authenticated:
+            SearchHistory.objects.create(
+                user=request.user,
+                query=search_query
+            )
     
     total_products = products.count()
     
-    # Phân trang
     paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -169,40 +176,64 @@ def product_search(request):
     return render(request, 'product.html', context)
 
 def search_suggestions(request):
-    query = request.GET.get('q', '')
-    print(f"Search suggestions query: {query}")  # Debug
+    """API trả về gợi ý tìm kiếm"""
+    query = request.GET.get('q', '').strip()
+    suggestions = []
     
+    if request.user.is_authenticated:
+        if query:
+            # Lọc lịch sử theo query
+            history = SearchHistory.objects.filter(
+                user=request.user,
+                query__icontains=query
+            ).values('query').distinct()[:5]
+        else:
+            # Lấy lịch sử gần đây
+            history = SearchHistory.objects.filter(
+                user=request.user
+            ).values('query').distinct()[:8]
+        
+        for item in history:
+            suggestions.append({
+                'type': 'history',
+                'text': item['query'],
+                'url': f'/products/search/?q={item["query"]}'
+            })
+    
+    # Gợi ý từ sản phẩm
     if query:
-        # Tìm sản phẩm phù hợp
         products = Product.objects.filter(
             Q(name__icontains=query) |
             Q(description__icontains=query)
         )[:5]
         
-        # Tìm danh mục phù hợp
-        categories = Category.objects.filter(
-            name__icontains=query
-        )[:3]
-        
-        suggestions = []
         for product in products:
             suggestions.append({
-                'type': 'Sản phẩm',
-                'name': product.name,
-                'url': f'/products/{product.id}/'  # Sửa theo URL pattern của bạn
+                'type': 'product',
+                'text': product.name,
+                'price': f'{product.price:,.0f}₫',
+                'image': product.image.url if product.image else '',
+                'url': f'/products/{product.id}/'
             })
-        
-        for category in categories:
-            suggestions.append({
-                'type': 'Danh mục',
-                'name': category.name,
-                'url': f'/products/?category={category.id}'
-            })
-        
-        print(f"Found {len(suggestions)} suggestions")  # Debug
-        return JsonResponse({'suggestions': suggestions})
     
-    return JsonResponse({'suggestions': []})
+    return JsonResponse({'suggestions': suggestions})
+
+@login_required
+def clear_search_history(request):
+    """Xóa lịch sử tìm kiếm"""
+    if request.method == 'POST':
+        SearchHistory.objects.filter(user=request.user).delete()
+        return JsonResponse({'success': True, 'message': 'Đã xóa lịch sử tìm kiếm'})
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+@login_required
+def delete_search_item(request):
+    """Xóa 1 item trong lịch sử"""
+    if request.method == 'POST':
+        query = request.POST.get('query')
+        SearchHistory.objects.filter(user=request.user, query=query).delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
 
 #lấy danh sách review của sản phẩm
 from django.shortcuts import get_object_or_404, render

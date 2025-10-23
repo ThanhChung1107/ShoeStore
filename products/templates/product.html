@@ -78,15 +78,45 @@
 
             <!-- Phần sản phẩm -->
             <div class="products-section">
+                <!-- Search Container với Lịch sử -->
                 <div class="search-container">
-                    <form method="GET" action="{% url 'product_search' %}" class="search-form">
-                        <input type="text" name="q" placeholder="Tìm kiếm sản phẩm..." value="{{ search_query|default:'' }}" class="search-input" id="searchInput">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i>
-                        </button>
+                    <form method="GET" action="{% url 'product_search' %}" class="search-form" id="searchForm">
+                        <div class="search-wrapper">
+                            <input 
+                                type="text" 
+                                name="q" 
+                                placeholder="Tìm kiếm sản phẩm..." 
+                                value="{{ search_query|default:'' }}" 
+                                class="search-input" 
+                                id="searchInput"
+                                autocomplete="off"
+                            >
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            
+                            <!-- Dropdown Suggestions -->
+                            <div id="searchSuggestions" class="search-suggestions">
+                                <div class="suggestions-header">
+                                    {% if user.is_authenticated %}
+                                    <span class="suggestions-title">
+                                        <i class="fas fa-history"></i> Lịch sử tìm kiếm
+                                    </span>
+                                    <button type="button" id="clearAllHistory" class="clear-history-btn">
+                                        <i class="fas fa-trash-alt"></i> Xóa tất cả
+                                    </button>
+                                    {% else %}
+                                    <span class="suggestions-title">Gợi ý tìm kiếm</span>
+                                    {% endif %}
+                                </div>
+                                <div id="suggestionsList" class="suggestions-list">
+                                    <!-- Sẽ được load bằng JavaScript -->
+                                </div>
+                            </div>
+                        </div>
                     </form>
-                    <div class="search-suggestions" id="searchSuggestions"></div>
                 </div>
+
                 <div class="products-header">
                     <div>
                         <h2>
@@ -110,7 +140,6 @@
                 </div>
                 
                 <div class="products-grid" id="productsGrid">
-                    <!-- Hàng 1 -->
                      {% for product in products %}
                     <a href="{% url 'product_detail' product.id %}" class="product-link">
                         <div class="product-card" data-category="shoes" data-price="{{ product.price }}" data-rating="{{ product.rating }}" data-color="mixed">
@@ -126,7 +155,6 @@
                     </a>
                     {% endfor %}
                 </div>
-                
 
                 <!-- Phân trang -->
                 <div class="pagination">

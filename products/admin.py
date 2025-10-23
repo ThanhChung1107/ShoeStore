@@ -56,3 +56,16 @@ class ReviewImageAdmin(admin.ModelAdmin):
     list_display = ['review', 'uploaded_at']
     list_filter = ['uploaded_at']
     readonly_fields = ['uploaded_at']
+
+from .models import SearchHistory
+
+@admin.register(SearchHistory)
+class SearchHistoryAdmin(admin.ModelAdmin):
+    list_display = ['user', 'query', 'searched_at']
+    list_filter = ['searched_at', 'user']
+    search_fields = ['user__username', 'query']
+    readonly_fields = ['searched_at']
+    date_hierarchy = 'searched_at'
+    
+    def has_add_permission(self, request):
+        return False

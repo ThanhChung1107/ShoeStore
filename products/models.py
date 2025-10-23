@@ -97,3 +97,17 @@ class ReviewImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.review}"
+
+
+class SearchHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_history')
+    query = models.CharField(max_length=200, verbose_name="Từ khóa tìm kiếm")
+    searched_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-searched_at']
+        verbose_name = 'Lịch sử tìm kiếm'
+        verbose_name_plural = 'Lịch sử tìm kiếm'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.query}"
