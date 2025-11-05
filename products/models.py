@@ -98,16 +98,34 @@ class ReviewImage(models.Model):
     def __str__(self):
         return f"Image for {self.review}"
 
-
 class SearchHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_history')
-    query = models.CharField(max_length=200, verbose_name="Từ khóa tìm kiếm")
-    searched_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
+    query = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        ordering = ['-searched_at']
-        verbose_name = 'Lịch sử tìm kiếm'
-        verbose_name_plural = 'Lịch sử tìm kiếm'
+        ordering = ['-created_at']
+        verbose_name = 'Search History'
+        verbose_name_plural = 'Search Histories'
     
     def __str__(self):
-        return f"{self.user.username} - {self.query}"
+        return f"{self.query} - {self.created_at}"
+    
+class ProductViewHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE,null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+    view_count = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['-viewed_at']
+        unique_together = ('user', 'product')  # Mỗi user chỉ có 1 record per product
+        indexes = [
+            models.Index(fields=['user', 'viewed_at']),
+            models.Index(fields=['session_key', 'viewed_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username if self.user else self.session_key} - {self.product.name}"

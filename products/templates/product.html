@@ -178,212 +178,570 @@
 {% comment %} JavaScript xử lý bộ lọc {% endcomment %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Khởi tạo
+    // ========== PHẦN TÌM KIẾM VÀ LỊCH SỬ TÌM KIẾM ==========
+    const searchInput = document.getElementById('searchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    const searchHistorySection = document.getElementById('searchHistorySection');
+    const searchSuggestionsSection = document.getElementById('searchSuggestionsSection');
+    const searchHistoryList = document.getElementById('searchHistoryList');
+    const searchSuggestionsList = document.getElementById('searchSuggestionsList');
+    
+    let searchTimeout;
+    
+    // Khởi tạo filters
     initializeFilters();
+    
+    // ========== EVENT LISTENERS CHO TÌM KIẾM ==========
+    
+    // Khi focus vào ô tìm kiếm
+    if (searchInput) {
+        searchInput.addEventListener('focus', function() {
+            const query = this.value.trim();
+            
+            if (query.length >= 2) {
+                fetchSuggestions(query);
+            } else {
+                loadSearchHistory();
+            }
+        });
+        
+        // Khi nhập vào ô tìm kiếm
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    fetchSuggestions(query);
+                }, 300);
+            } else if (query.length === 0) {
+                loadSearchHistory();
+            } else {
+                hideSearchDropdown();
+            }
+        });
+    }
+    
+    // Đóng dropdown khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (searchDropdown && !searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+            hideSearchDropdown();
+        }
+    });
+    
+    // ========== FUNCTIONS CHO TÌM KIẾM ==========
+    
+    // Load lịch sử tìm kiếm
+    function loadSearchHistory() {
+        if (!searchHistoryList) return;
+        
+        fetch('/products/get-search-history/')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.history && data.history.length > 0) {
+                    displaySearchHistory(data.history);
+                    showSearchDropdown();
+                } else {
+                    hideSearchDropdown();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading search history:', error);
+                hideSearchDropdown();
+            });
+    }
+    
+    // Hiển thị lịch sử tìm kiếm
+    function displaySearchHistory(history) {
+        if (!searchHistoryList || !searchHistorySection || !searchSuggestionsSection) return;
+        
+        searchHistoryList.innerHTML = '';
+        
+        history.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <div class="search-history-item flex-grow-1" onclick="searchByHistory('${escapeHtml(item.query)}')" style="cursor: pointer;">
+                    <i class="fas fa-history text-muted me-2"></i>
+                    <span class="text-dark">${escapeHtml(item.query)}</span>
+                </div>
+                <button class=" delete-history-btn" onclick="deleteHistoryItem(${item.id}, event)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            searchHistoryList.appendChild(li);
+        });
+        
+        searchHistorySection.style.display = 'block';
+        searchSuggestionsSection.style.display = 'none';
+    }
+    
+    // Fetch suggestions
+    function fetchSuggestions(query) {
+        if (!searchSuggestionsList) return;
+        
+        fetch(`/products/search-suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    displaySuggestions(data.suggestions);
+                    showSearchDropdown();
+                } else {
+                    hideSearchDropdown();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+                hideSearchDropdown();
+            });
+    }
+    
+    // Hiển thị suggestions
+    function displaySuggestions(suggestions) {
+        if (!searchSuggestionsList || !searchHistorySection || !searchSuggestionsSection) return;
+        
+        searchSuggestionsList.innerHTML = '';
+        
+        suggestions.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            
+            if (item.type === 'history') {
+                li.innerHTML = `
+                    <a href="${item.url}" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-history text-muted me-2"></i>
+                            <span>${escapeHtml(item.text)}</span>
+                        </div>
+                        <small class="text-muted">Lịch sử</small>
+                    </a>
+                `;
+            } else if (item.type === 'product') {
+                li.innerHTML = `
+                    <a href="${item.url}" class="text-decoration-none text-dark d-flex align-items-center">
+                        <img src="${item.image || '/static/images/default-product.jpg'}" 
+                             alt="${escapeHtml(item.text)}" 
+                             class="me-3 rounded" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">${escapeHtml(item.text)}</div>
+                            <small class="text-success">${item.price || ''}</small>
+                        </div>
+                    </a>
+                `;
+            }
+            
+            searchSuggestionsList.appendChild(li);
+        });
+        
+        searchHistorySection.style.display = 'none';
+        searchSuggestionsSection.style.display = 'block';
+    }
+    
+    // Hiển thị dropdown
+    function showSearchDropdown() {
+        if (searchDropdown) {
+            searchDropdown.style.display = 'block';
+        }
+    }
+    
+    // Ẩn dropdown
+    function hideSearchDropdown() {
+        if (searchDropdown) {
+            searchDropdown.style.display = 'none';
+        }
+    }
+    
+    // Escape HTML để tránh XSS
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ========== PHẦN FILTER SẢN PHẨM ==========
+    
+    function initializeFilters() {
+        // Gắn sự kiện cho tất cả checkbox
+        const checkboxes = document.querySelectorAll('.sidebar input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function(e) {
+                e.preventDefault();
+                applyFiltersAjax();
+            });
+        });
+
+        // Gắn sự kiện cho price inputs
+        const priceInputs = document.querySelectorAll('.price-inputs input');
+        priceInputs.forEach(input => {
+            input.addEventListener('input', debounce(applyFiltersAjax, 500));
+        });
+    }
+
+    // Hàm AJAX filtering (không reload trang)
+    function applyFiltersAjax() {
+        // Thu thập dữ liệu filter
+        const categories = [];
+        const brands = [];
+        const priceRanges = [];
+
+        // Lấy categories đã chọn
+        document.querySelectorAll('input[name="category"]:checked').forEach(cb => {
+            if (cb.value !== 'all') {
+                categories.push(cb.value);
+            }
+        });
+
+        // Lấy brands đã chọn
+        document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
+            if (cb.value !== 'all') {
+                brands.push(cb.value);
+            }
+        });
+
+        // Lấy price ranges đã chọn
+        document.querySelectorAll('input[name="price"]:checked').forEach(cb => {
+            priceRanges.push(cb.value);
+        });
+
+        // Lấy giá min/max từ input
+        const minPrice = document.getElementById('minPrice')?.value;
+        const maxPrice = document.getElementById('maxPrice')?.value;
+
+        // Tạo URL parameters
+        const params = new URLSearchParams();
+        
+        if (categories.length > 0) {
+            categories.forEach(cat => params.append('categories[]', cat));
+        }
+        
+        if (brands.length > 0) {
+            brands.forEach(brand => params.append('brands[]', brand));
+        }
+        
+        if (priceRanges.length > 0) {
+            params.append('price_range', priceRanges[0]);
+        }
+        
+        if (minPrice) params.append('min_price', minPrice);
+        if (maxPrice) params.append('max_price', maxPrice);
+
+        // Gọi AJAX request
+        const filterUrl = document.getElementById('productsGrid')?.dataset.filterUrl || '{% url "filter_products" %}';
+        
+        fetch(`${filterUrl}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            updateProductsDisplay(data);
+        })
+        .catch(error => {
+            console.error('Error filtering products:', error);
+        });
+    }
+
+    function updateProductsDisplay(data) {
+        const productsGrid = document.getElementById('productsGrid');
+        const resultsCount = document.querySelector('.results-count');
+        
+        if (!productsGrid || !resultsCount) return;
+        
+        // Cập nhật số lượng kết quả
+        resultsCount.textContent = `Hiển thị ${data.count} sản phẩm`;
+        
+        try {
+            // Parse products data
+            const products = JSON.parse(data.products);
+            
+            // Xóa sản phẩm cũ với animation
+            productsGrid.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                productsGrid.innerHTML = '';
+                
+                // Thêm sản phẩm mới
+                products.forEach((productData, index) => {
+                    const product = productData.fields;
+                    const productCard = createProductCard(product, productData.pk);
+                    productsGrid.appendChild(productCard);
+                    
+                    // Animation cho sản phẩm mới
+                    setTimeout(() => {
+                        productCard.style.opacity = '1';
+                        productCard.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+                
+                productsGrid.style.opacity = '1';
+            }, 300);
+        } catch (error) {
+            console.error('Error parsing products data:', error);
+        }
+    }
+
+    function createProductCard(product, productId) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.3s ease';
+
+        const imageUrl = product.image || '/static/images/default-product.jpg';
+        const price = parseInt(product.price).toLocaleString();
+        const brandHtml = product.brand_name ? 
+            `<div class="brand"><span class="brand-tag">${product.brand_name}</span></div>` : '';
+
+        card.innerHTML = `
+            <a href="/products/product/${productId}/" class="product-link text-decoration-none">
+                <img src="${imageUrl}" alt="${product.name}" class="product-image">
+                <h4 class="product-name">${product.name}</h4>
+            </a>
+            ${brandHtml}
+            <p class="product-price">${price}₫</p>
+        `;
+
+        return card;
+    }
+
+    // Hàm áp dụng khoảng giá từ input
+    window.applyPriceRange = function() {
+        applyFiltersAjax();
+    }
+
+    // Hàm xóa tất cả bộ lọc
+    window.clearAllFilters = function() {
+        // Bỏ chọn tất cả checkbox
+        document.querySelectorAll('.sidebar input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        // Chọn lại "Tất cả"
+        const allCategoryCheckbox = document.querySelector('input[value="all"]');
+        if (allCategoryCheckbox) {
+            allCategoryCheckbox.checked = true;
+        }
+        
+        // Xóa giá trị price inputs
+        const minPriceInput = document.getElementById('minPrice');
+        const maxPriceInput = document.getElementById('maxPrice');
+        if (minPriceInput) minPriceInput.value = '';
+        if (maxPriceInput) maxPriceInput.value = '';
+        
+        // Áp dụng filter (sẽ hiển thị tất cả)
+        applyFiltersAjax();
+    }
+
+    // Hàm sắp xếp sản phẩm
+    window.sortProducts = function(sortType) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('sort', sortType);
+        
+        const filterUrl = document.getElementById('productsGrid')?.dataset.filterUrl || '{% url "filter_products" %}';
+        
+        fetch(`${filterUrl}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            updateProductsDisplay(data);
+        })
+        .catch(error => {
+            console.error('Error sorting products:', error);
+        });
+    }
+
+    // Hàm debounce để tránh gọi API quá nhiều lần
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 });
 
-function initializeFilters() {
-    // Gắn sự kiện cho tất cả checkbox
-    const checkboxes = document.querySelectorAll('.sidebar input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function(e) {
-            e.preventDefault(); // Ngăn chặn hành vi mặc định
-            applyFiltersAjax(); // Gọi hàm AJAX thay vì reload
-        });
-    });
+// ========== GLOBAL FUNCTIONS ==========
 
-    // Gắn sự kiện cho price inputs
-    const priceInputs = document.querySelectorAll('.price-inputs input');
-    priceInputs.forEach(input => {
-        input.addEventListener('input', debounce(applyFiltersAjax, 500));
-    });
+// Tìm kiếm bằng lịch sử
+function searchByHistory(query) {
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.querySelector('.search-form');
+    
+    if (searchInput) {
+        searchInput.value = query;
+    }
+    
+    if (searchForm) {
+        searchForm.submit();
+    }
 }
 
-// Hàm AJAX filtering (không reload trang)
-function applyFiltersAjax() {
-    // Thu thập dữ liệu filter
-    const categories = [];
-    const brands = [];
-    const priceRanges = [];
-
-    // Lấy categories đã chọn
-    document.querySelectorAll('input[name="category"]:checked').forEach(cb => {
-        if (cb.value !== 'all') {
-            categories.push(cb.value);
-        }
-    });
-
-    // Lấy brands đã chọn
-    document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
-        if (cb.value !== 'all') {
-            brands.push(cb.value);
-        }
-    });
-
-    // Lấy price ranges đã chọn
-    document.querySelectorAll('input[name="price"]:checked').forEach(cb => {
-        priceRanges.push(cb.value);
-    });
-
-    // Lấy giá min/max từ input
-    const minPrice = document.getElementById('minPrice').value;
-    const maxPrice = document.getElementById('maxPrice').value;
-
-    // Tạo URL parameters
-    const params = new URLSearchParams();
-    
-    if (categories.length > 0) {
-        categories.forEach(cat => params.append('categories[]', cat));
+// Xóa một mục lịch sử - đơn giản, bấm là xóa luôn
+function deleteHistoryItem(id, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
     }
     
-    if (brands.length > 0) {
-        brands.forEach(brand => params.append('brands[]', brand));
+    // Tìm phần tử cha (li) để xóa
+    const historyItem = event?.target?.closest('li');
+    
+    // Xóa ngay lập tức khỏi DOM với hiệu ứng
+    if (historyItem) {
+        historyItem.style.opacity = '0';
+        historyItem.style.transform = 'translateX(-10px)';
+        historyItem.style.transition = 'all 0.2s ease';
+        
+        setTimeout(() => {
+            historyItem.remove();
+            
+            // Kiểm tra nếu không còn mục nào thì ẩn section
+            const historyList = document.getElementById('searchHistoryList');
+            if (historyList && historyList.children.length === 0) {
+                const historySection = document.getElementById('searchHistorySection');
+                const dropdown = document.getElementById('searchDropdown');
+                if (historySection) historySection.style.display = 'none';
+                if (dropdown) dropdown.style.display = 'none';
+            }
+        }, 200);
     }
     
-    if (priceRanges.length > 0) {
-        params.append('price_range', priceRanges[0]);
-    }
+    // Gọi API xóa ở backend (không cần chờ kết quả)
+    const deleteUrl = document.getElementById('searchHistoryList')?.dataset.deleteUrl || '/products/delete-search-history/';
     
-    if (minPrice) params.append('min_price', minPrice);
-    if (maxPrice) params.append('max_price', maxPrice);
-
-    // Gọi AJAX request
-    fetch(`{% url "filter_products" %}?${params.toString()}`, {
-        method: 'GET',
+    fetch(deleteUrl, {
+        method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/json',
-        }
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `id=${id}`
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        updateProductsDisplay(data);
+        // Không làm gì cả, chỉ log để debug nếu cần
+        if (!data.success) {
+            console.warn('Xóa không thành công trên server:', data.error);
+        }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Lỗi khi gọi API xóa:', error);
     });
 }
-
-function updateProductsDisplay(data) {
-    const productsGrid = document.getElementById('productsGrid');
-    const resultsCount = document.querySelector('.results-count');
-    
-    // Cập nhật số lượng kết quả
-    resultsCount.textContent = `Hiển thị ${data.count} sản phẩm`;
-    
-    // Parse products data
-    const products = JSON.parse(data.products);
-    
-    // Xóa sản phẩm cũ với animation
-    productsGrid.style.opacity = '0.5';
-    
-    setTimeout(() => {
-        productsGrid.innerHTML = '';
-        
-        // Thêm sản phẩm mới
-        products.forEach((productData, index) => {
-            const product = productData.fields;
-            const productCard = createProductCard(product, productData.pk);
-            productsGrid.appendChild(productCard);
-            
-            // Animation cho sản phẩm mới
-            setTimeout(() => {
-                productCard.style.opacity = '1';
-                productCard.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-        
-        productsGrid.style.opacity = '1';
-    }, 300);
-}
-
-function createProductCard(product, productId) {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    card.style.transition = 'all 0.3s ease';
-
-    card.innerHTML = `
-        <a href="/products/product/${productId}/" class="product-link">
-            <img src="${product.image}" alt="${product.name}">
-            <h4 class="product-name">${product.name}</h4>
-        </a>
-        ${product.brand ? `<div class="brand"><span class="brand-tag">${product.brand_name || ''}</span></div>` : ''}
-        <p>${parseInt(product.price).toLocaleString()}₫</p>
-    `;
-
-    return card;
-}
-
-
-// Hàm debounce để tránh gọi API quá nhiều lần
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Hàm áp dụng khoảng giá từ input
-function applyPriceRange() {
-    applyFiltersAjax();
-}
-
-// Hàm xóa tất cả bộ lọc
-function clearAllFilters() {
-    // Bỏ chọn tất cả checkbox
-    document.querySelectorAll('.sidebar input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
-    
-    // Chọn lại "Tất cả"
-    const allCategoryCheckbox = document.querySelector('input[value="all"]');
-    if (allCategoryCheckbox) {
-        allCategoryCheckbox.checked = true;
+// Xóa toàn bộ lịch sử
+function clearAllHistory() {
+    if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử tìm kiếm?')) {
+        return;
     }
     
-    // Xóa giá trị price inputs
-    document.getElementById('minPrice').value = '';
-    document.getElementById('maxPrice').value = '';
-    
-    // Áp dụng filter (sẽ hiển thị tất cả)
-    applyFiltersAjax();
-}
-
-// Hàm sắp xếp sản phẩm
-function sortProducts(sortType) {
-    const params = new URLSearchParams(window.location.search);
-    params.set('sort', sortType);
-    
-    fetch(`{% url "filter_products" %}?${params.toString()}`, {
-        method: 'GET',
+    fetch('/products/clear-search-history/', {
+        method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
         }
     })
     .then(response => response.json())
     .then(data => {
-        updateProductsDisplay(data);
+        if (data.success) {
+            const searchDropdown = document.getElementById('searchDropdown');
+            if (searchDropdown) {
+                searchDropdown.style.display = 'none';
+            }
+            alert('Đã xóa toàn bộ lịch sử tìm kiếm');
+        } else {
+            alert('Có lỗi xảy ra: ' + (data.message || 'Unknown error'));
+        }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error clearing history:', error);
+        alert('Có lỗi xảy ra khi xóa lịch sử');
     });
 }
 
-// Animation styles
-const style = document.createElement('style');
-style.textContent = `
+// Load lịch sử tìm kiếm (global function)
+function loadSearchHistory() {
+    fetch('/products/get-search-history/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.history && data.history.length > 0) {
+                const searchHistoryList = document.getElementById('searchHistoryList');
+                const searchHistorySection = document.getElementById('searchHistorySection');
+                const searchSuggestionsSection = document.getElementById('searchSuggestionsSection');
+                const searchDropdown = document.getElementById('searchDropdown');
+                
+                if (!searchHistoryList) return;
+                
+                searchHistoryList.innerHTML = '';
+                
+                data.history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div class="search-history-item flex-grow-1" onclick="searchByHistory('${item.query.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                            <i class="fas fa-history text-muted me-2"></i>
+                            <span class="text-dark">${item.query}</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger delete-history-btn" onclick="deleteHistoryItem(${item.id}, event)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    searchHistoryList.appendChild(li);
+                });
+                
+                if (searchHistorySection) searchHistorySection.style.display = 'block';
+                if (searchSuggestionsSection) searchSuggestionsSection.style.display = 'none';
+                if (searchDropdown) searchDropdown.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading search history:', error);
+        });
+}
+
+// Lấy CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Thêm CSS động
+const dynamicStyles = `
     .product-card {
         transition: all 0.3s ease;
     }
@@ -395,73 +753,31 @@ style.textContent = `
     .filter-option input[type="checkbox"] {
         cursor: pointer;
     }
+    
     .accept-filters:hover {
         background: #e74c3c;
     }
-`;
-document.head.appendChild(style);
-
-// xử lý đề xuất tìm kiếm
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded'); // Debug
     
-    const searchInput = document.getElementById('searchInput');
-    const suggestionsContainer = document.getElementById('searchSuggestions');
-    
-    if (!searchInput || !suggestionsContainer) {
-        console.error('Không tìm thấy search input hoặc suggestions container');
-        return;
+    .search-history-item:hover {
+        background-color: #f8f9fa;
     }
     
-    console.log('Elements found:', searchInput, suggestionsContainer); // Debug
+    .delete-history-btn {
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
     
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        console.log('Input changed:', query); // Debug
-        
-        if (query.length < 2) {
-            suggestionsContainer.style.display = 'none';
-            suggestionsContainer.innerHTML = '';
-            return;
-        }
-        
-        console.log('Fetching suggestions for:', query); // Debug
-        
-        // Gọi API đề xuất
-        fetch(`/products/search-suggestions/?q=${encodeURIComponent(query)}`)
-            .then(response => {
-                console.log('Response status:', response.status); // Debug
-                return response.json();
-            })
-            .then(data => {
-                console.log('Suggestions data:', data); // Debug
-                
-                if (data.suggestions && data.suggestions.length > 0) {
-                    let html = '<ul>';
-                    data.suggestions.forEach(item => {
-                        html += `<li><a href="${item.url}">${item.name}</a></li>`;
-                    });
-                    html += '</ul>';
-                    suggestionsContainer.innerHTML = html;
-                    suggestionsContainer.style.display = 'block';
-                } else {
-                    suggestionsContainer.style.display = 'none';
-                    suggestionsContainer.innerHTML = '';
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error); // Debug
-                suggestionsContainer.style.display = 'none';
-            });
-    });
-    
-    // Ẩn đề xuất khi click ra ngoài
-    document.addEventListener('click', function(e) {
-        if (e.target !== searchInput && !suggestionsContainer.contains(e.target)) {
-            suggestionsContainer.style.display = 'none';
-        }
-    });
-});
+    .delete-history-btn:hover {
+        opacity: 1;
+    }
+`;
+
+// Thêm styles vào document
+if (document.head) {
+    const style = document.createElement('style');
+    style.textContent = dynamicStyles;
+    document.head.appendChild(style);
+}
 </script>
 
 

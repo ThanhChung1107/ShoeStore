@@ -86,34 +86,68 @@
     <div class="small-container">
         <!-- Sản phẩm nổi bật -->
         <h2 class="title">Sản phẩm nổi bật</h2>
-        <div class="row">
-            {% for product in featured_products %}
-            <div class="col-4 product-item">
-                <a href="{% url 'product_detail' product.id %}">
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
-                    <h4 class="product-name">{{ product.name }}</h4>
-                </a>
-                <div class="product-meta">
-                    <div class="product-brand">
-                        {% if product.brand %}
-                        <span class="brand-tag">{{ product.brand.name }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="product-price">{{product.price|intcomma }}₫</div>
-                    {% if product.old_price %}
-                    <div class="product-old-price">{{ product.old_price|floatformat:0 }}₫</div>
-                    {% endif %}
+        <!-- Phần sản phẩm đề xuất -->
+        <section class="recommended-products">
+            <div class="container">
+                <div class="row" id="recommendedProducts">
+                    <!-- Sẽ được load bằng AJAX -->
+                    <div class="loading">Đang tải đề xuất...</div>
                 </div>
-                {% if product.discount_percent %}
-                <div class="product-badge">-{{ product.discount_percent }}%</div>
-                {% endif %}
             </div>
-            {% empty %}
-            <div class="col-12">
-                <p>Hiện chưa có sản phẩm nổi bật</p>
-            </div>
-            {% endfor %}
-        </div>
+        </section>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                loadRecommendations();
+            });
+
+            function loadRecommendations() {
+                fetch('/products/recommendations/?limit=8')
+                    .then(response => response.json())
+                    .then(data => {
+                        const container = document.getElementById('recommendedProducts');
+                        
+                        if (data.recommendations && data.recommendations.length > 0) {
+                            container.innerHTML = '';
+                            
+                            data.recommendations.forEach(product => {
+                                const productUrl = `/products/product/${product.id}/`;
+                                const brandName = product.brand ? `<span class="brand-tag">${product.brand}</span>` : '';
+                                const productCard = `
+                                    <div class="col-4 product-item">
+                                        <a href="${productUrl}">
+                                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                                            <h4 class="product-name">${product.name}</h4>
+                                        </a>
+                                        <div class="product-meta">
+                                            <div class="product-brand">${brandName}</div>
+                                            <div class="product-price">${Number(product.price).toLocaleString()}₫</div>
+                                        </div>
+                                    </div>
+                                `;
+                                container.innerHTML += productCard;
+                            });
+                            
+                            // Tracking click
+                            container.querySelectorAll('.product-item a').forEach(link => {
+                                link.addEventListener('click', function() {
+                                    const productId = this.href.split('/').slice(-2, -1)[0]; // lấy id từ URL
+                                    trackProductView(productId);
+                                });
+                            });
+                            
+                        } else {
+                            container.innerHTML = '<p>Không có đề xuất nào vào lúc này.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading recommendations:', error);
+                        document.getElementById('recommendedProducts').innerHTML = 
+                            '<p>Không thể tải đề xuất.</p>';
+                    });
+            }
+            </script>
+
 
         <!-- Sản phẩm mới nhất -->
         <h2 class="title">Sản phẩm mới nhất</h2>

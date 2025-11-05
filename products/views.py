@@ -1,6 +1,6 @@
 from django.shortcuts import render,get_object_or_404
 from django.core.paginator import Paginator
-from .models import Product, Category, Brand, ProductSize, ProductReview, ReviewImage
+from .models import Product, Category, Brand, ProductSize, ProductReview, ReviewImage, SearchHistory
 from django.http import JsonResponse
 from django.shortcuts import redirect
 import json
@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from .forms import ProductReviewForm, ReviewImageForm
 from orders.models import OrderItem
-from .models import SearchHistory
+from django.utils import timezone
 # Create your views here.
 def product(request):
     products = Product.objects.all().order_by('-created_at')
@@ -131,13 +131,175 @@ def product_details(request, product_id):
     }
     
     return render(request, 'product_detail.html', context)
+
+from .models import ProductViewHistory
+
+def track_product_view(request, product_id):
+    """Lưu lịch sử xem sản phẩm (AJAX)"""
+    print(f"=== START TRACK PRODUCT VIEW ===")
+    print(f"Method: {request.method}")
+    print(f"Is AJAX: {request.headers.get('X-Requested-With')}")
+    print(f"Product ID: {product_id}")
+    print(f"User: {request.user} (Authenticated: {request.user.is_authenticated})")
+    print(f"Session key: {request.session.session_key}")
+    print(f"Session exists: {hasattr(request, 'session')}")
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            print(f"Product found: {product.name}")
+            
+            # Tạo hoặc cập nhật lịch sử xem
+            if request.user.is_authenticated:
+                print("=== AUTHENTICATED USER ===")
+                view_history, created = ProductViewHistory.objects.get_or_create(
+                    user=request.user,
+                    product=product,
+                    defaults={'view_count': 1}
+                )
+                if not created:
+                    print(f"Updating existing record - old count: {view_history.view_count}")
+                    view_history.view_count += 1
+                    view_history.viewed_at = timezone.now()
+                    view_history.save()
+                    print(f"Updated record - new count: {view_history.view_count}")
+                else:
+                    print("Created new record")
+                
+                # Verify the record was saved
+                verify_record = ProductViewHistory.objects.filter(
+                    user=request.user, 
+                    product=product
+                ).first()
+                print(f"Verify record: {verify_record} (View count: {verify_record.view_count if verify_record else 'None'})")
+                
+            else:
+                print("=== ANONYMOUS USER ===")
+                # User chưa đăng nhập - dùng session
+                if not request.session.session_key:
+                    print("Creating new session...")
+                    request.session.create()
+                    print(f"New session key: {request.session.session_key}")
+                
+                session_key = request.session.session_key
+                print(f"Using session key: {session_key}")
+                
+                view_history, created = ProductViewHistory.objects.get_or_create(
+                    session_key=session_key,
+                    product=product,
+                    defaults={'view_count': 1}
+                )
+                if not created:
+                    print(f"Updating existing record - old count: {view_history.view_count}")
+                    view_history.view_count += 1
+                    view_history.viewed_at = timezone.now()
+                    view_history.save()
+                    print(f"Updated record - new count: {view_history.view_count}")
+                else:
+                    print("Created new record")
+                
+                # Verify the record was saved
+                verify_record = ProductViewHistory.objects.filter(
+                    session_key=session_key, 
+                    product=product
+                ).first()
+                print(f"Verify record: {verify_record} (View count: {verify_record.view_count if verify_record else 'None'})")
+            
+            # Test: Count total records
+            total_records = ProductViewHistory.objects.count()
+            print(f"Total ProductViewHistory records in DB: {total_records}")
+            
+            print("=== END TRACK PRODUCT VIEW ===")
+            return JsonResponse({'success': True, 'message': 'Tracked product view'})
+            
+        except Exception as e:
+            print(f"ERROR in track_product_view: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': str(e)})
+    else:
+        print("Not an AJAX request")
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+def get_recommendations(request):
+    """Lấy sản phẩm đề xuất dựa trên lịch sử xem"""
+    limit = int(request.GET.get('limit', 4))  # ĐỔI: 8 -> 4
+    
+    recommendations = []
+    
+    if request.user.is_authenticated:
+        # User đã đăng nhập: dựa trên lịch sử của user
+        user_viewed_products = ProductViewHistory.objects.filter(
+            user=request.user
+        ).order_by('-viewed_at')[:5]  # Có thể giảm xuống 5 để tối ưu
+        
+        if user_viewed_products.exists():
+            # Lấy danh mục từ các sản phẩm đã xem
+            viewed_categories = set([pv.product.category for pv in user_viewed_products])
+            viewed_brands = set([pv.product.brand for pv in user_viewed_products if pv.product.brand])
+            
+            # Đề xuất sản phẩm cùng danh mục/thương hiệu - CHỈ LẤY 4
+            recommendations = Product.objects.filter(
+                Q(category__in=viewed_categories) | 
+                Q(brand__in=viewed_brands)
+            ).exclude(
+                id__in=[pv.product.id for pv in user_viewed_products]
+            ).distinct().order_by('-created_at')[:limit]  # Đã có limit=4
+    
+    else:
+        # User chưa đăng nhập: dựa trên session
+        session_key = request.session.session_key
+        if session_key:
+            session_viewed_products = ProductViewHistory.objects.filter(
+                session_key=session_key
+            ).order_by('-viewed_at')[:5]  # Giảm xuống 5
+            
+            if session_viewed_products.exists():
+                viewed_categories = set([pv.product.category for pv in session_viewed_products])
+                viewed_brands = set([pv.product.brand for pv in session_viewed_products if pv.product.brand])
+                
+                recommendations = Product.objects.filter(
+                    Q(category__in=viewed_categories) | 
+                    Q(brand__in=viewed_brands)
+                ).exclude(
+                    id__in=[pv.product.id for pv in session_viewed_products]
+                ).distinct().order_by('-created_at')[:limit]  # Đã có limit=4
+    
+    # Nếu không có đủ đề xuất, thêm sản phẩm phổ biến - CHỈ LẤY ĐỦ 4
+    if len(recommendations) < limit:
+        popular_products = Product.objects.annotate(
+            view_count=Count('productviewhistory')
+        ).order_by('-view_count', '-created_at')[:limit]  # ĐỔI: limit - len(recommendations) -> limit
+        
+        # Kết hợp và loại bỏ trùng lặp
+        existing_ids = [p.id for p in recommendations]
+        additional_products = [p for p in popular_products if p.id not in existing_ids]
+        recommendations = list(recommendations) + additional_products
+    
+    # Đảm bảo chỉ trả về đúng 4 sản phẩm
+    recommendations = recommendations[:limit]
+    
+    # Serialize dữ liệu
+    recommendations_data = []
+    for product in recommendations:
+        recommendations_data.append({
+            'id': product.id,
+            'name': product.name,
+            'price': float(product.price),
+            'image': product.image.url if product.image else '',
+            'brand': product.brand.name if product.brand else '',
+            'category': product.category.name,
+            'url': f'/products/{product.id}/'
+        })
+    
+    return JsonResponse({'recommendations': recommendations_data})
+
+
 # tìm kiếm sản phẩm
-# products/views.py - Cập nhật các function này
-
-from .models import SearchHistory
-
 def product_search(request):
     """Xử lý tìm kiếm sản phẩm"""
+    
     products = Product.objects.all()
     categories = Category.objects.all()
     brands = Brand.objects.all()
@@ -145,19 +307,15 @@ def product_search(request):
     search_query = request.GET.get('q', '').strip()
     
     if search_query:
+        # Lưu lịch sử tìm kiếm
+        save_search_history(request, search_query)
+        
         products = products.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(category__name__icontains=search_query) |
             Q(brand__name__icontains=search_query)
         ).distinct()
-        
-        # 👉 LƯU LỊCH SỬ TÌM KIẾM
-        if request.user.is_authenticated:
-            SearchHistory.objects.create(
-                user=request.user,
-                query=search_query
-            )
     
     total_products = products.count()
     
@@ -175,66 +333,214 @@ def product_search(request):
     
     return render(request, 'product.html', context)
 
-def search_suggestions(request):
-    """API trả về gợi ý tìm kiếm"""
-    query = request.GET.get('q', '').strip()
-    suggestions = []
+def save_search_history(request, query):
+    """Lưu lịch sử tìm kiếm"""
+    if len(query) < 2:  # Không lưu query quá ngắn
+        return
     
     if request.user.is_authenticated:
-        if query:
-            # Lọc lịch sử theo query
-            history = SearchHistory.objects.filter(
-                user=request.user,
-                query__icontains=query
-            ).values('query').distinct()[:5]
+        # Kiểm tra xem query đã tồn tại chưa
+        existing = SearchHistory.objects.filter(
+            user=request.user,
+            query__iexact=query
+        ).first()
+        
+        if existing:
+            # Cập nhật thời gian
+            existing.created_at = timezone.now()
+            existing.save()
         else:
-            # Lấy lịch sử gần đây
+            # Tạo mới
+            SearchHistory.objects.create(
+                user=request.user,
+                query=query
+            )
+        
+        # Giới hạn số lượng lịch sử (giữ 20 mục gần nhất)
+        user_history = SearchHistory.objects.filter(user=request.user)
+        if user_history.count() > 20:
+            old_records = user_history[20:]
+            SearchHistory.objects.filter(
+                id__in=[record.id for record in old_records]
+            ).delete()
+    else:
+        # Lưu theo session cho user chưa đăng nhập
+        if not request.session.session_key:
+            request.session.create()
+        
+        session_key = request.session.session_key
+        
+        existing = SearchHistory.objects.filter(
+            session_key=session_key,
+            query__iexact=query
+        ).first()
+        
+        if existing:
+            existing.created_at = timezone.now()
+            existing.save()
+        else:
+            SearchHistory.objects.create(
+                session_key=session_key,
+                query=query
+            )
+        
+        # Giới hạn số lượng
+        session_history = SearchHistory.objects.filter(session_key=session_key)
+        if session_history.count() > 20:
+            old_records = session_history[20:]
+            SearchHistory.objects.filter(
+                id__in=[record.id for record in old_records]
+            ).delete()
+
+def get_search_history(request):
+    """Lấy lịch sử tìm kiếm"""
+    try:
+        if request.user.is_authenticated:
             history = SearchHistory.objects.filter(
                 user=request.user
-            ).values('query').distinct()[:8]
+            ).order_by('-created_at')[:10]
+        else:
+            if not request.session.session_key:
+                return JsonResponse({'history': []})
+            
+            session_key = request.session.session_key
+            history = SearchHistory.objects.filter(
+                session_key=session_key
+            ).order_by('-created_at')[:10]
         
-        for item in history:
-            suggestions.append({
-                'type': 'history',
-                'text': item['query'],
-                'url': f'/products/search/?q={item["query"]}'
-            })
+        history_data = [
+            {
+                'query': item.query,
+                'id': item.id
+            }
+            for item in history
+        ]
+        
+        return JsonResponse({'history': history_data, 'success': True})
+    except Exception as e:
+        return JsonResponse({'history': [], 'success': False, 'error': str(e)})
     
-    # Gợi ý từ sản phẩm
-    if query:
-        products = Product.objects.filter(
-            Q(name__icontains=query) |
-            Q(description__icontains=query)
-        )[:5]
+def delete_search_history(request):
+    """Xóa một mục lịch sử tìm kiếm"""
+    try:
+        # Debug: In ra để kiểm tra
+        print("DELETE REQUEST RECEIVED")
+        print("Method:", request.method)
+        print("POST data:", request.POST)
+        print("Body:", request.body)
         
-        for product in products:
-            suggestions.append({
-                'type': 'product',
-                'text': product.name,
-                'price': f'{product.price:,.0f}₫',
-                'image': product.image.url if product.image else '',
-                'url': f'/products/{product.id}/'
+        # Lấy ID từ POST data
+        history_id = request.POST.get('id')
+        
+        # Nếu không có trong POST, thử lấy từ JSON body
+        if not history_id:
+            try:
+                data = json.loads(request.body)
+                history_id = data.get('id')
+            except:
+                pass
+        
+        print("History ID:", history_id)
+        
+        if not history_id:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Missing ID parameter'
             })
+        
+        if request.user.is_authenticated:
+            deleted_count = SearchHistory.objects.filter(
+                id=history_id,
+                user=request.user
+            ).delete()[0]
+            
+            print(f"Deleted {deleted_count} items for user {request.user.username}")
+        else:
+            session_key = request.session.session_key
+            if not session_key:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'No session key'
+                })
+            
+            deleted_count = SearchHistory.objects.filter(
+                id=history_id,
+                session_key=session_key
+            ).delete()[0]
+            
+            print(f"Deleted {deleted_count} items for session {session_key}")
+        
+        if deleted_count > 0:
+            return JsonResponse({'success': True, 'message': 'Deleted successfully'})
+        else:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Item not found or already deleted'
+            })
+            
+    except Exception as e:
+        print("ERROR:", str(e))
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False, 
+            'error': str(e)
+        })
+
+def clear_search_history(request):
+    """Xóa toàn bộ lịch sử tìm kiếm"""
+    if request.method == 'POST':
+        try:
+            if request.user.is_authenticated:
+                SearchHistory.objects.filter(user=request.user).delete()
+            else:
+                session_key = request.session.session_key
+                SearchHistory.objects.filter(session_key=session_key).delete()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+def search_suggestions(request):
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return JsonResponse({'suggestions': []})
+    
+    # Tìm sản phẩm phù hợp
+    products = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query)
+    ).select_related('brand')[:5]
+    
+    # Tìm danh mục phù hợp
+    categories = Category.objects.filter(
+        name__icontains=query
+    )[:3]
+    
+    suggestions = []
+    
+    # Thêm sản phẩm vào suggestions
+    for product in products:
+        suggestions.append({
+            'type': 'product',
+            'text': product.name,
+            'url': f'/products/product/{product.id}/',  # Điều chỉnh theo URL pattern
+            'image': product.image.url if product.image else '',
+            'price': f'{product.price:,.0f}₫'
+        })
+    
+    # Thêm danh mục vào suggestions
+    for category in categories:
+        suggestions.append({
+            'type': 'category',
+            'text': category.name,
+            'url': f'/products/?category={category.id}'
+        })
     
     return JsonResponse({'suggestions': suggestions})
-
-@login_required
-def clear_search_history(request):
-    """Xóa lịch sử tìm kiếm"""
-    if request.method == 'POST':
-        SearchHistory.objects.filter(user=request.user).delete()
-        return JsonResponse({'success': True, 'message': 'Đã xóa lịch sử tìm kiếm'})
-    return JsonResponse({'success': False, 'message': 'Invalid request'})
-
-@login_required
-def delete_search_item(request):
-    """Xóa 1 item trong lịch sử"""
-    if request.method == 'POST':
-        query = request.POST.get('query')
-        SearchHistory.objects.filter(user=request.user, query=query).delete()
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
-
 #lấy danh sách review của sản phẩm
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse

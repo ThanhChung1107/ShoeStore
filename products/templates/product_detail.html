@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="{% static 'css/product_review.css' %}">
 {% endblock %}
 {% block content %}
+{% csrf_token %}
 <div class="small-container single-product">
     <div class="row">
         <div class="col-2">
@@ -762,5 +763,63 @@ stars.forEach((star, index) => {
         }
     });
 });
+// Theo dõi khi người dùng xem sản phẩm
+document.addEventListener('DOMContentLoaded', function() {
+    // Lấy product ID từ URL hoặc từ biến template
+    const productId = {{ product.id }};
+    
+    // Gọi API tracking sau 2 giây (đảm bảo user thực sự xem)
+    setTimeout(() => {
+        trackProductView(productId);
+    }, 2000);
+    
+    // Cũng track khi user click vào sản phẩm liên quan
+    document.querySelectorAll('.related-product, .product-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const relatedProductId = this.dataset.productId || 
+                                   this.href.match(/\/products\/(\d+)\//)?.[1];
+            if (relatedProductId) {
+                trackProductView(relatedProductId);
+            }
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Hàm track product view
+function trackProductView(productId) {
+    fetch(`/products/track-view/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Product view tracked');
+        }
+    })
+    .catch(error => {
+        console.error('Error tracking product view:', error);
+    });
+}
 </script>
 {% endblock %}

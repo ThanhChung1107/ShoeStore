@@ -14,6 +14,16 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     inlines = [ProductSizeInline]
 
+@admin.register(Size)
+class SizeAdmin(admin.ModelAdmin):
+    search_fields = ['value']
+    list_display = ['value']
+
+@admin.register(ProductSize)
+class ProductSizeAdmin(admin.ModelAdmin):
+    list_display = ('product', 'size', 'stock')
+    autocomplete_fields = ['size', 'product']
+
 from django.contrib import admin
 from .models import ProductReview, ReviewImage
 
