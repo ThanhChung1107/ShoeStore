@@ -71,11 +71,11 @@ from .models import SearchHistory
 
 @admin.register(SearchHistory)
 class SearchHistoryAdmin(admin.ModelAdmin):
-    list_display = ['user', 'query', 'searched_at']
-    list_filter = ['searched_at', 'user']
+    list_display = ['user', 'query', 'created_at']
+    list_filter = ['created_at', 'user']
     search_fields = ['user__username', 'query']
-    readonly_fields = ['searched_at']
-    date_hierarchy = 'searched_at'
+    readonly_fields = ['created_at']
+    date_hierarchy = 'created_at'
     
     def has_add_permission(self, request):
         return False
