@@ -95,7 +95,7 @@
         <div class="col-4 product-item">
                 <a href="{% url 'product_detail' related.id %}">
                     <img src="{{ related.image.url }}" alt="{{ related.name }}" class="product-image">
-                    <h4 class="product-name">{{ product.name }}</h4>
+                    <h4 class="product-name">{{ related.name }}</h4>
                 </a>
                 <div class="product-meta">
                     <div class="product-brand">
