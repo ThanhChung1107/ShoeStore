@@ -1165,22 +1165,33 @@ form {
     color: #333;
 }
     
+/* Search Container Styles */
 .search-container {
     position: relative;
     width: 100%;
-    max-width: 800px;
-    margin: 0 auto 20px;
-}
-/* CSS cho search container và form */
-.search-form {
-    position: relative;
-    display: flex;
-    width: 100%;
-    border: none;
+    max-width: 600px;
+    margin: 20px auto 30px;
+    z-index: 1000;
+    overflow: visible;
 }
 
+.search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-form {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    max-height: 400px;
+}
 .search-input {
-    flex: 1;
+    width: 100%;
     padding: 12px 50px 12px 16px;
     border: 2px solid #ee4d2d;
     border-radius: 24px;
@@ -1188,23 +1199,24 @@ form {
     outline: none;
     transition: all 0.3s ease;
     background: white;
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
 .search-input:focus {
     box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
-    border-color: #ee4d2d;
 }
 
 .search-button {
     position: absolute;
-    right: 14px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     background: #ee4d2d;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     color: white;
     cursor: pointer;
     display: flex;
@@ -1218,34 +1230,166 @@ form {
     transform: translateY(-50%) scale(1.05);
 }
 
-/* Dropdown states */
+/* Dropdown Styles */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    max-height: min(60vh, 480px); /* responsive max height */
+    overflow-y: auto;
+    z-index: 9999; /* higher to avoid being covered */
+    display: none;
+    margin-top: 4px;
+    -webkit-overflow-scrolling: touch;
+}
 .search-dropdown.show {
-    display: block !important;
+    display: block;
     animation: fadeInDown 0.3s ease;
+    display: block;
 }
 
-.search-history-section.show,
-.search-suggestions-section.show {
-    display: block !important;
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Empty states */
-.search-history-empty,
-.search-suggestions-empty {
-    padding: 4px;
-    text-align: center;
+/* Header Styles */
+.search-history-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.search-suggestions-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+    background: #f8f9fa;
+}
+
+.clear-history-btn {
+    background: none;
+    border: none;
+    color: #ee4d2d;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.clear-history-btn:hover {
+    text-decoration: underline;
+}
+
+/* List Styles */
+.search-history-list,
+.search-suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.search-history-item,
+.search-suggestion-item {
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f5f5f5;
+}
+.search-history-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0; /* padding để inner element (.search-history-item) điều khiển padding */
+}
+.search-history-list li .delete-history-btn {
+    margin-left: 12px;
+}
+.search-history-item:hover,
+.search-suggestion-item:hover {
+    background: #f8f9fa;
+}
+
+.search-history-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    cursor: pointer;
+    color: #333;
+}
+
+.search-history-content i {
+    margin-right: 10px;
     color: #999;
-    font-style: italic;
+    font-size: 14px;
+    width: 16px;
 }
 
-/* Suggestion items specific styles */
-.search-suggestions-list .suggestion-image {
+.delete-history-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.delete-history-btn:hover {
+    background: #ffebee;
+    color: #ee4d2d;
+}
+
+/* Suggestion Items */
+.suggestion-link {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+}
+
+.suggestion-image {
     width: 40px;
     height: 40px;
     object-fit: cover;
     border-radius: 4px;
     margin-right: 12px;
     border: 1px solid #f0f0f0;
+}
+
+.suggestion-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #666;
+    background: #f5f5f5;
+    border-radius: 4px;
 }
 
 .suggestion-content {
@@ -1266,145 +1410,47 @@ form {
     font-weight: 600;
 }
 
-.suggestion-meta {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
+.suggestion-category {
+    color: #666;
+    font-size: 12px;
 }
 
 .suggestion-type {
     background: #f0f0f0;
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
     font-size: 11px;
     color: #666;
     margin-left: 10px;
-}
-
-.suggestion-category {
-    background: #e8f4fd;
-    color: #1890ff;
 }
 
 .suggestion-product {
-    background: #f0f9eb;
-    color: #52c41a;
-}
-.search-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1000;
+    background: #e8f5e8;
+    color: #2e7d32;
 }
 
-.search-history-header,
-.search-suggestions-header {
-    padding: 12px 16px;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.suggestion-category-type {
+    background: #e3f2fd;
+    color: #1565c0;
 }
 
-.search-suggestions-header {
-    font-size: 14px;
-    color: #666;
-}
-
-.clear-history-btn {
-    background: none;
-    border: none;
-    color: #ee4d2d;
-    cursor: pointer;
-    font-size: 13px;
-    padding: 4px 8px;
-}
-
-.clear-history-btn:hover {
-    text-decoration: underline;
-}
-
-.search-history-list,
-.search-suggestions-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.search-history-list li,
-.search-suggestions-list li {
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background 0.2s;
-}
-
-.search-history-list li:hover,
-.search-suggestions-list li:hover {
-    background: #f5f5f5;
-}
-
-.search-history-item {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    color: #333;
-}
-
-.search-history-item i {
-    margin-right: 10px;
+/* Empty States */
+.search-history-empty,
+.search-suggestions-empty {
+    padding: 20px;
+    text-align: center;
     color: #999;
-    font-size: 14px;
-}
-
-.delete-history-btn {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.search-history-list li:hover .delete-history-btn {
-    opacity: 1;
-}
-
-.delete-history-btn:hover {
-    color: #ee4d2d;
-}
-
-.search-suggestion-item {
+    font-style: italic;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    color: #333;
+    gap: 8px;
 }
 
-.search-suggestion-item i {
-    margin-right: 10px;
-    color: #999;
-    font-size: 14px;
-}
-
-.suggestion-type {
-    background: #f0f0f0;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    color: #666;
-    margin-left: 10px;
+.search-history-empty i,
+.search-suggestions-empty i {
+    font-size: 24px;
+    color: #ccc;
 }
 
 /* Home Section with Coverflow */
@@ -2167,3 +2213,48 @@ form {
 .join-room-btn:hover {
     background-color: #ff3620;
 }
+
+// ...existing code...
+/* Make forms not clip absolute dropdowns (search) */
+form {
+    /* nếu muốn giữ scroll cho các form dài khác, thay đổi selector đó thay vì toàn bộ form.
+       Ở đây để đảm bảo dropdown không bị cắt, đặt giá trị chung an toàn */
+    max-height: none;
+    overflow: visible;   /* <- quan trọng: cho phép dropdown vượt ra ngoài form */
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+/* Ensure search form is not constrained */
+.search-form {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    max-height: none;    /* remove hard limit */
+    overflow: visible;   /* allow dropdown to overflow */
+}
+
+/* Dropdown: add fallback for max-height and keep it on top */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    max-height: 480px;              /* fallback for older browsers */
+    max-height: min(60vh, 480px);   /* modern responsive cap */
+    overflow-y: auto;
+    z-index: 99999;                 /* ensure above other elements */
+    display: none;
+    margin-top: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+/* ...existing code... */

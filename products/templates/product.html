@@ -95,22 +95,29 @@
                                 <i class="fas fa-search"></i>
                             </button>
                             
-                            <!-- Dropdown Suggestions -->
-                            <div id="searchSuggestions" class="search-suggestions">
-                                <div class="suggestions-header">
-                                    {% if user.is_authenticated %}
-                                    <span class="suggestions-title">
-                                        <i class="fas fa-history"></i> Lịch sử tìm kiếm
-                                    </span>
-                                    <button type="button" id="clearAllHistory" class="clear-history-btn">
-                                        <i class="fas fa-trash-alt"></i> Xóa tất cả
-                                    </button>
-                                    {% else %}
-                                    <span class="suggestions-title">Gợi ý tìm kiếm</span>
-                                    {% endif %}
+                            <!-- Dropdown Suggestions - THÊM PHẦN NÀY -->
+                            <div id="searchDropdown" class="search-dropdown" style="display: none;">
+                                <!-- Lịch sử tìm kiếm -->
+                                <div id="searchHistorySection">
+                                    <div class="search-history-header">
+                                        <span><i class="fas fa-history"></i> Lịch sử tìm kiếm</span>
+                                        <button type="button" onclick="clearAllHistory()" class="clear-history-btn">
+                                            <i class="fas fa-trash-alt"></i> Xóa tất cả
+                                        </button>
+                                    </div>
+                                    <ul id="searchHistoryList" class="search-history-list">
+                                        <!-- Sẽ được load bằng JavaScript -->
+                                    </ul>
                                 </div>
-                                <div id="suggestionsList" class="suggestions-list">
-                                    <!-- Sẽ được load bằng JavaScript -->
+                                
+                                <!-- Gợi ý tìm kiếm -->
+                                <div id="searchSuggestionsSection" style="display: none;">
+                                    <div class="search-suggestions-header">
+                                        <span>Gợi ý tìm kiếm</span>
+                                    </div>
+                                    <ul id="searchSuggestionsList" class="search-suggestions-list">
+                                        <!-- Sẽ được load bằng JavaScript -->
+                                    </ul>
                                 </div>
                             </div>
                         </div>
