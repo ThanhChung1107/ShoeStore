@@ -87,7 +87,7 @@ class ProductReview(models.Model):
         return OrderItem.objects.filter(
             order__user = self.user,
             product = self.product,
-            order__tatus = 'paid'
+            order__status = 'paid'
         ).exists()
     
 class ReviewImage(models.Model):

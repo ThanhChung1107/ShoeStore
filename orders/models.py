@@ -1,6 +1,4 @@
 from django.db import models
-
-# Create your models here.
 from django.utils import timezone
 from cart.models import Cart
 from django.contrib.auth import get_user_model
@@ -28,6 +26,15 @@ class Order(models.Model):
     payment_date = models.DateTimeField(blank=True, null=True)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     selected_items = models.ManyToManyField('cart.CartItem')
+    
+    # Thêm trường total_amount
+    total_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        verbose_name="Tổng tiền trước giảm giá"
+    )
+    
     discount = models.ForeignKey(
         Discount, 
         on_delete=models.SET_NULL, 
@@ -35,22 +42,34 @@ class Order(models.Model):
         blank=True,
         verbose_name="Mã giảm giá áp dụng"
     )
+    
+    # Thêm trường discount_code để lưu code string (phòng trường hợp discount bị xóa)
+    discount_code = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Mã giảm giá"
+    )
+    
     discount_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         default=0,
         verbose_name="Số tiền được giảm"
     )
+    
     final_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         default=0,
         verbose_name="Tổng thanh toán"
     )
+    
     @property
     def total_price(self):
         # Sử dụng OrderItem để tính tổng thay vì CartItem
         return sum(item.subtotal for item in self.order_items.all())
+    
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
 
@@ -68,11 +87,11 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
-    product = models.ForeignKey(Product, on_delete=models.PROTECT,related_name="order_items")
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="order_items")
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=12, decimal_places=2)
-    size = models.CharField(max_length=50, blank=True, null=True)   # giá tại thời điểm đặt
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    size = models.CharField(max_length=50, blank=True, null=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
         self.subtotal = self.price * self.quantity
