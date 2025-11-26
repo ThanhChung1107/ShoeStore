@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -192,3 +193,34 @@ CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# ===== External API config (loaded from static/data/openapi.json if present) =====
+EXTERNAL_API_BASE_URL = None
+EXTERNAL_API_TOKEN = None
+EXTERNAL_ADDRESS_ENDPOINT = None  # e.g., '/v1/address/resolve'
+
+try:
+    spec_path = BASE_DIR / 'static' / 'data' / 'openapi.json'
+    if spec_path.exists():
+        with open(spec_path, encoding='utf-8') as f:
+            openapi_spec = json.load(f)
+            # Try common places for servers/base URL per OpenAPI 3
+            servers = openapi_spec.get('servers') or []
+            if servers and isinstance(servers, list):
+                url = servers[0].get('url')
+                if isinstance(url, str) and url:
+                    EXTERNAL_API_BASE_URL = url.rstrip('/')
+            # Optional: read token from extension fields if present
+            # e.g., x-auth or components.securitySchemes
+            x_auth = openapi_spec.get('x-auth') or {}
+            token = x_auth.get('token')
+            if isinstance(token, str) and token:
+                EXTERNAL_API_TOKEN = token
+            # Optional: endpoint path for address resolution
+            x_endpoints = openapi_spec.get('x-endpoints') or {}
+            addr_ep = x_endpoints.get('addressResolve')
+            if isinstance(addr_ep, str) and addr_ep:
+                EXTERNAL_ADDRESS_ENDPOINT = addr_ep
+except Exception:
+    # Keep defaults if spec cannot be parsed; avoid crashing settings
+    pass

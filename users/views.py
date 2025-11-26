@@ -53,6 +53,14 @@ def custom_login(request):
                     request.GET.get('next') or 
                     '/'
                 )
+
+                # Làm sạch next_url để tránh redirect không an toàn hoặc thiếu quyền
+                if not isinstance(next_url, str) or not next_url.startswith('/'):
+                    next_url = '/'
+                if next_url in ('', '/favicon.ico', None):
+                    next_url = '/'
+                if not user.is_staff and next_url.startswith('/admin/'):
+                    next_url = '/'
                 
                 # Xóa next_url khỏi session
                 if 'next_url' in request.session:
@@ -123,6 +131,10 @@ def register(request):
                 # KHÔNG login tự động, chỉ thông báo thành công
                 messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
                 
+                # Dọn dẹp next_url cũ để tránh redirect tới trang yêu cầu quyền sau khi login
+                if 'next_url' in request.session:
+                    del request.session['next_url']
+
                 # REDIRECT VỀ TRANG LOGIN
                 return redirect('login')
                     

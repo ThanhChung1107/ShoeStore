@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from .models import Cart
+from django.urls import reverse
 
 def cart_detail(request):
     if not request.user.is_authenticated:
