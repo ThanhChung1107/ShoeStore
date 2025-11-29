@@ -19,6 +19,7 @@ from django.http import JsonResponse
 from .forms import AvatarUploadForm
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, Count, Q
+from django.db.models.functions import Coalesce
 from django.db.models import Subquery, OuterRef
 from products.models import ProductReview
 
@@ -60,6 +61,9 @@ def custom_login(request):
                 if next_url in ('', '/favicon.ico', None):
                     next_url = '/'
                 if not user.is_staff and next_url.startswith('/admin/'):
+                    next_url = '/'
+                # Tránh redirect tới các endpoint JSON/API (ví dụ gợi ý sản phẩm)
+                if next_url.startswith('/products/recommendations'):
                     next_url = '/'
                 
                 # Xóa next_url khỏi session
@@ -158,11 +162,11 @@ def home(request):
      # Lấy đánh giá 5 sao mới nhất cho mỗi sản phẩm
     # Lấy sản phẩm bán chạy nhất
     best_selling_products = Product.objects.annotate(
-        total_sold=Sum('order_items__quantity'),
-        five_star_count=Count('reviews', filter=Q(reviews__rating=5))
+        total_sold=Coalesce(Sum('order_items__quantity', filter=Q(order_items__order__status='paid')), 0),
+        review_count=Coalesce(Count('reviews', distinct=True), 0),
+        five_star_count=Coalesce(Count('reviews', filter=Q(reviews__rating=5), distinct=True), 0)
     ).filter(
-        total_sold__gt=0,
-        five_star_count__gt=0
+        total_sold__gt=0
     ).order_by('-total_sold')[:5]
     
     # Lấy đánh giá 5 sao mới nhất cho mỗi sản phẩm
