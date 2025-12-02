@@ -183,8 +183,8 @@ SESSION_SAVE_EVERY_REQUEST = True
 VNPAY_RETURN_URL = 'http://localhost:8000/payment/payment_return'  # get from config
 VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'  # get from config
 VNPAY_API_URL = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
-VNPAY_TMN_CODE = 'YCWWRHWC'  # Website ID in VNPAY System, get from config
-VNPAY_HASH_SECRET_KEY = 'M2SHPUB1NC2KTVTTWEHOF8IVA2527W7V'  # Secret key for create checksum,get from config
+VNPAY_TMN_CODE = 'HU089Z5E'  # Website ID in VNPAY System, get from config
+VNPAY_HASH_SECRET_KEY = 'AVTFWR0PCYXO78ML78XS3AUWFDPU6CKC'  # Secret key for create checksum,get from config
 
 #cho phép gửi cookie sau khi redirect vể từ VNPAY
 SESSION_COOKIE_SAMESITE = 'Lax'

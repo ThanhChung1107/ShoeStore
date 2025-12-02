@@ -440,6 +440,25 @@
 }
 </style>
 
+<style>
+/* Bố cục và màu mặc định cho rating stars */
+.rating-input {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+.rating-input input[type="radio"] {
+    display: none;
+}
+.rating-input label {
+    font-size: 24px;
+    color: #ddd; /* mặc định là xám */
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease-in-out;
+}
+</style>
+
 <script>
 // JavaScript để xử lý thay đổi ảnh khi click vào thumbnail
 const productImg = document.getElementById("productImg");
@@ -742,27 +761,43 @@ document.getElementById('reviewForm').addEventListener('submit', function(e) {
     });
 });
 
-// Rating stars hover effect
-const stars = document.querySelectorAll('.rating-input label');
-stars.forEach((star, index) => {
-    star.addEventListener('mouseenter', () => {
-        for (let i = stars.length - 1; i >= index; i--) {
-            stars[i].style.color = '#ffd700';
-        }
+// Rating stars hover/click effect (sửa hướng trái -> phải)
+const ratingContainer = document.querySelector('.rating-input');
+const starLabels = document.querySelectorAll('.rating-input label');
+
+function paintStars(count) {
+    starLabels.forEach((lbl, i) => {
+        lbl.style.color = i < count ? '#ffd700' : '#ddd';
     });
-    
-    star.addEventListener('mouseleave', () => {
-        const checked = document.querySelector('.rating-input input:checked');
-        if (checked) {
-            const checkedIndex = parseInt(checked.value) - 1;
-            for (let i = 4; i >= 0; i--) {
-                stars[i].style.color = i <= checkedIndex ? '#ffd700' : '#ddd';
-            }
-        } else {
-            stars.forEach(s => s.style.color = '#ddd');
-        }
+}
+
+starLabels.forEach((label, idx) => {
+    // Hover: tô từ trái sang phải đến ngôi sao đang trỏ
+    label.addEventListener('mouseenter', () => paintStars(idx + 1));
+
+    // Click: chọn radio tương ứng và giữ màu
+    label.addEventListener('click', () => {
+        const input = document.getElementById(`star${idx + 1}`);
+        if (input) input.checked = true;
+        paintStars(idx + 1);
     });
 });
+
+// Khi rời khỏi vùng rating: hiển thị theo giá trị đã chọn
+if (ratingContainer) {
+    ratingContainer.addEventListener('mouseleave', () => {
+        const checked = document.querySelector('.rating-input input:checked');
+        const value = checked ? parseInt(checked.value, 10) : 0;
+        paintStars(value);
+    });
+}
+
+// Khởi tạo màu ban đầu theo radio đã chọn (nếu có)
+(function initRatingPaint() {
+    const checked = document.querySelector('.rating-input input:checked');
+    const value = checked ? parseInt(checked.value, 10) : 0;
+    paintStars(value);
+})();
 // Theo dõi khi người dùng xem sản phẩm
 document.addEventListener('DOMContentLoaded', function() {
     // Lấy product ID từ URL hoặc từ biến template

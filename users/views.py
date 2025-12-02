@@ -89,8 +89,8 @@ def custom_login(request):
     else:
         form = AuthenticationForm()
     
-    # Truyền next_url từ session vào template
-    next_url = request.session.get('next_url', '')
+    # Truyền next_url ưu tiên từ query (?next=...), fallback session
+    next_url = request.GET.get('next') or request.session.get('next_url', '')
     return render(request, 'users/login_signup.html', {
         'next_url': next_url,
         'active_tab': 'login'
