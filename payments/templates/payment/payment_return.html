@@ -141,11 +141,23 @@
         
         <div class="actions">
             <a href="/" class="btn btn-success">Về trang chủ</a>
-            <a href="{% url 'order_detail' order_id %}" class="btn">Xem sản phẩm</a>
+            {% if debug_authenticated %}
+                <a href="{% url 'order_detail' order.id %}" class="btn">Xem chi tiết đơn hàng</a>
+            {% else %}
+                <p style="color: #dc3545; font-weight: bold;">⚠️ Bạn chưa đăng nhập. Vui lòng <a href="/login/">đăng nhập</a> để xem đơn hàng.</p>
+                <a href="{% url 'order_list' %}" class="btn">Danh sách đơn hàng</a>
+            {% endif %}
             {% if result == "Lỗi" or result == "Thất bại" %}
-            <a href="/checkout/" class="btn">Thử lại</a>
+            <a href="/" class="btn">Quay lại</a>
             {% endif %}
         </div>
+        
+        <!-- Debug thông tin (nếu cần) -->
+        {% comment %} {% if debug_authenticated %}
+        <div style="margin-top: 20px; padding: 10px; background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 5px; font-size: 12px;">
+            <strong>Debug:</strong> Đăng nhập: {{ debug_authenticated }} | User: {{ debug_user.username }}
+        </div>
+        {% endif %} {% endcomment %}
         
         <!-- Debug info (chỉ hiển thị trong development) -->
         {% if debug %}

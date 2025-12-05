@@ -12,6 +12,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt  # ⚠️ THÊM IMPORT NÀY
 from decimal import Decimal
 
 from orders.models import Order, OrderItem
@@ -74,6 +75,9 @@ def payment(request):
             vnp.requestData['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')
             vnp.requestData['vnp_IpAddr'] = ipaddr
             vnp.requestData['vnp_ReturnUrl'] = settings.VNPAY_RETURN_URL
+            
+            # ⚠️ QUAN TRỌNG: LUÔN SAVE SESSION TRƯỚC KHI REDIRECT ĐỂ GIỮ DỮ LIỆU
+            request.session.save()
             
             vnpay_payment_url = vnp.get_payment_url(settings.VNPAY_PAYMENT_URL, settings.VNPAY_HASH_SECRET_KEY)
             print(vnpay_payment_url)
@@ -145,8 +149,14 @@ def payment_ipn(request):
     return result
 
 
+@csrf_exempt  # ⚠️ VNPAY gửi GET request mà không có CSRF token
 def payment_return(request):
     inputData = request.GET
+    # 🔍 DEBUG: Check session khi VNPAY redirect về
+    print(f"\n🔍 [PAYMENT_RETURN] User authenticated: {request.user.is_authenticated}")
+    print(f"🔍 [PAYMENT_RETURN] User: {request.user}")
+    print(f"🔍 [PAYMENT_RETURN] Session keys: {list(request.session.keys())}")
+    
     if inputData:
         vnp = vnpay()
         vnp.responseData = inputData.dict()
@@ -178,15 +188,17 @@ def payment_return(request):
                         if selected_items_ids:
                             CartItem.objects.filter(id__in=selected_items_ids).delete()
                         
-                        # ✅ Xóa session SAU KHI đã xử lý xong
+                        # ✅ XÓA SESSION KEYS SAU KHI XỬ LÝ XONG
+                        # ⚠️ QUAN TRỌNG: Chỉ xóa keys custom, KHÔNG xóa auth session
                         session_keys = ['selected_items', 'pending_order_id', 'applied_discount_code']
                         for key in session_keys:
                             if key in request.session:
                                 del request.session[key]
-                        request.session.modified = True
+                        # ⚠️ QUAN TRỌNG: LUÔN gọi save() để lưu session trước khi render
+                        request.session.save()
                     
                     # Hiển thị trang thành công
-                    return render(request, "payment/payment_return.html", {
+                    response = render(request, "payment/payment_return.html", {
                         "title": "Kết quả thanh toán",
                         "result": "Thành công", 
                         "order_id": order_id,
@@ -194,8 +206,11 @@ def payment_return(request):
                         "order_desc": order_desc,
                         "vnp_TransactionNo": vnp_TransactionNo,
                         "vnp_ResponseCode": vnp_ResponseCode,
-                        "order": order  # Truyền order để hiển thị thông tin chi tiết
+                        "order": order,  # Truyền order để hiển thị thông tin chi tiết
+                        "debug_user": request.user,  # Debug: thêm user info
+                        "debug_authenticated": request.user.is_authenticated  # Debug
                     })
+                    return response
                     
                 except Order.DoesNotExist:
                     return render(request, "payment/payment_return.html", {
@@ -472,6 +487,8 @@ def create_payment_from_checkout(request):
             # Lưu order ID vào session
             request.session['pending_order_id'] = order.id
             request.session.modified = True
+            # ⚠️ QUAN TRỌNG: LUÔN SAVE SESSION TRƯỚC KHI REDIRECT
+            request.session.save()
 
             payment_url = vnp.get_payment_url(settings.VNPAY_PAYMENT_URL, settings.VNPAY_HASH_SECRET_KEY)
             print(f"🔗 VNPay URL: {payment_url}")

@@ -177,7 +177,15 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-SESSION_SAVE_EVERY_REQUEST = True
+
+# ⚠️ SESSION CONFIGURATION - QUAN TRỌNG ĐỂ GIỮ SESSION KHI REDIRECT VNPAY
+SESSION_SAVE_EVERY_REQUEST = True  # ✅ Lưu session sau mỗi request
+SESSION_COOKIE_AGE = 1209600  # 2 tuần (giây)
+SESSION_COOKIE_HTTPONLY = True  # Chỉ HTTP, không cho JavaScript truy cập
+SESSION_COOKIE_SECURE = False  # Set False nếu dùng HTTP (localhost), True nếu HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'  # ✅ Cho phép gửi cookie khi redirect từ VNPAY
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Lưu session vào database
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session tồn tại sau khi đóng browser
 
 # VNPAY CONFIG
 VNPAY_RETURN_URL = 'http://localhost:8000/payment/payment_return'  # get from config
@@ -186,10 +194,8 @@ VNPAY_API_URL = 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
 VNPAY_TMN_CODE = 'HU089Z5E'  # Website ID in VNPAY System, get from config
 VNPAY_HASH_SECRET_KEY = 'AVTFWR0PCYXO78ML78XS3AUWFDPU6CKC'  # Secret key for create checksum,get from config
 
-#cho phép gửi cookie sau khi redirect vể từ VNPAY
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+# ⚠️ CSRF & Cookie configuration cho VNPAY redirect
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'https://sandbox.vnpayment.vn']
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]

@@ -10,11 +10,12 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from .models import Cart
 from django.urls import reverse
+from urllib.parse import quote
 
 def cart_detail(request):
     if not request.user.is_authenticated:
         messages.warning(request, "Vui lòng đăng nhập để xem giỏ hàng!")
-        request.session['next_url'] = 'cart_detail'  # để sau khi login quay lại giỏ
+        request.session['next_url'] = reverse('cart_detail')  # lưu URL đầy đủ để sau khi login quay lại giỏ
         return redirect('login')
 
     cart, created = Cart.objects.get_or_create(user=request.user)
@@ -28,14 +29,18 @@ def add_to_cart(request, product_id):
     if not request.user.is_authenticated:
         current_url = request.META.get('HTTP_REFERER') or '/'
         request.session['next_url'] = current_url
+        # ⚠️ QUAN TRỌNG: Lưu session ngay lập tức
+        request.session.save()
         
         # XỬ LÝ AJAX REQUEST KHI CHƯA ĐĂNG NHẬP
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Trả về URL login với next parameter
+            login_url = reverse('login') + '?next=' + quote(current_url)
             return JsonResponse({
                 "success": False,
                 "redirect": True,
                 "login_required": True,
-                "login_url": reverse('login'),
+                "login_url": login_url,
                 "message": "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!"
             }, status=200)  # Để status 200 để JavaScript dễ xử lý
         

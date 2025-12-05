@@ -22,6 +22,7 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
 from django.db.models import Subquery, OuterRef
 from products.models import ProductReview
+from urllib.parse import urlparse
 
 def custom_login(request):
     # Nếu user đã đăng nhập, chuyển hướng về trang chủ
@@ -55,20 +56,30 @@ def custom_login(request):
                     '/'
                 )
 
-                # Làm sạch next_url để tránh redirect không an toàn hoặc thiếu quyền
-                if not isinstance(next_url, str) or not next_url.startswith('/'):
+                # ⚠️ Làm sạch next_url: nếu là full URL, lấy path từ nó
+                if next_url.startswith('http://') or next_url.startswith('https://'):
+                    # Lấy path từ full URL
+                    parsed = urlparse(next_url)
+                    next_url = parsed.path or '/'
+                
+                # Kiểm tra URL hợp lệ
+                if not isinstance(next_url, str):
                     next_url = '/'
-                if next_url in ('', '/favicon.ico', None):
+                elif not next_url.startswith('/'):
                     next_url = '/'
-                if not user.is_staff and next_url.startswith('/admin/'):
+                elif next_url in ('', '/favicon.ico'):
                     next_url = '/'
-                # Tránh redirect tới các endpoint JSON/API (ví dụ gợi ý sản phẩm)
-                if next_url.startswith('/products/recommendations'):
+                elif not user.is_staff and next_url.startswith('/admin/'):
+                    next_url = '/'
+                elif next_url.startswith('/products/recommendations'):
                     next_url = '/'
                 
                 # Xóa next_url khỏi session
                 if 'next_url' in request.session:
                     del request.session['next_url']
+                
+                # Lưu session trước khi redirect (quan trọng)
+                request.session.modified = True
                     
                 messages.success(request, 'Đăng nhập thành công!')
                 return redirect(next_url)
@@ -217,18 +228,46 @@ def account_detail(request):
 def upload_avatar(request):
     if request.method == 'POST' and request.FILES.get('avatar'):
         user = request.user
-        form = AvatarUploadForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            form.save()
-            return JsonResponse({
-                'success': True,
-                'message': 'Cập nhật avatar thành công!',
-                'avatar_url': user.avatar.url
-            })
-        else:
+        avatar_file = request.FILES.get('avatar')
+        
+        # ✅ Validate file size (max 5MB)
+        if avatar_file.size > 5 * 1024 * 1024:
             return JsonResponse({
                 'success': False,
-                'message': 'Có lỗi xảy ra: ' + str(form.errors)
+                'message': 'File quá lớn! Tối đa 5MB.'
+            })
+        
+        # ✅ Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'message': 'Định dạng file không hợp lệ! Chỉ chấp nhận JPEG, PNG, GIF, WebP.'
+            })
+        
+        form = AvatarUploadForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            try:
+                form.save()
+                # ⚠️ QUAN TRỌNG: Reload object từ database để lấy avatar mới
+                user.refresh_from_db()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Cập nhật avatar thành công!',
+                    'avatar_url': user.avatar.url
+                })
+            except Exception as e:
+                print(f"❌ Error saving avatar: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Lỗi khi lưu file: {str(e)}'
+                })
+        else:
+            error_msg = ', '.join([f"{field}: {', '.join(errors)}" for field, errors in form.errors.items()])
+            return JsonResponse({
+                'success': False,
+                'message': f'Có lỗi xảy ra: {error_msg}'
             })
     
     return JsonResponse({
